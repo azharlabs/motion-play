@@ -1,6 +1,6 @@
 {
   "framework": null,
-  "installCommand": "",
-  "buildCommand": "rm -rf .vercel-out && mkdir -p .vercel-out && cp -a stage0/. .vercel-out/",
-  "outputDirectory": ".vercel-out"
+  "installCommand": null,
+  "buildCommand": null,
+  "outputDirectory": null
 }
