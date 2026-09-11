@@ -1,5 +1,8 @@
 {
   "installCommand": null,
   "buildCommand": null,
-  "outputDirectory": "."
+  "outputDirectory": "stage0",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/stage0/$1" }
+  ]
 }
