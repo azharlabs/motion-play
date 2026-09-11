@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
+    />
+    <meta name="theme-color" content="#fff7ed" />
+    <title>MotionPlay — camera motion arcade</title>
+    <meta
+      name="description"
+      content="Fifteen camera games you play with your whole body. Nothing you film ever leaves your phone."
+    />
+
+    <!--
+      Installing to the home screen.
+
+      iOS ignores most of the manifest and reads its own `apple-` tags instead,
+      so both have to be here: the manifest for Android and desktop, the tags
+      below for iPhones. `apple-mobile-web-app-capable` is what drops Safari's
+      address bar and toolbar, which matters more than it sounds - the games
+      measure the viewport to lay themselves out, and the bar sliding away
+      mid-round would resize the stage under the player.
+    -->
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="MotionPlay" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+
+    <!-- Sharing the link: give it a face in Messages and WhatsApp. -->
+    <meta property="og:title" content="MotionPlay" />
+    <meta property="og:description" content="Fifteen camera games. Your body is the controller." />
+    <meta property="og:image" content="./icons/icon-1024.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23f97316'/%3E%3Cpath d='M7 9l5 5-5 2z' fill='%23e35d0a'/%3E%3Cpath d='M25 9l-5 5 5 2z' fill='%23e35d0a'/%3E%3Cellipse cx='16' cy='20' rx='7' ry='6' fill='%23fff7ed'/%3E%3Ccircle cx='12.5' cy='15' r='1.8' fill='%231f2937'/%3E%3Ccircle cx='19.5' cy='15' r='1.8' fill='%231f2937'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./css/app.css" />
+  </head>
+  <body>
+    <!-- ---------------- home ---------------- -->
+    <section id="screen-home" class="screen scroll">
+      <header class="home-head">
+        <canvas id="logo-mascot" width="120" height="120" aria-hidden="true"></canvas>
+        <div class="home-title">
+          <h1>Motion<span>Play</span></h1>
+          <p>Fifteen camera games. Your body is the controller.</p>
+        </div>
+        <button
+          type="button"
+          id="btn-activity"
+          class="icon-btn activity-btn"
+          aria-label="Your activity"
+        >
+          <span aria-hidden="true">📈</span>
+        </button>
+        <button
+          type="button"
+          id="btn-feedback"
+          class="icon-btn feedback-btn"
+          aria-label="Send feedback"
+        >
+          <span aria-hidden="true">💬</span>
+        </button>
+        <button
+          type="button"
+          id="btn-sound"
+          class="icon-btn sound-btn"
+          aria-pressed="true"
+          aria-label="Sound and vibration"
+        >
+          <span aria-hidden="true">🔊</span>
+        </button>
+      </header>
+
+      <!--
+        The way in is the movement you want to train, not a list of titles.
+        Every game sits under at least one skill, so the whole arcade is still
+        two taps away without repeating all ten of them here.
+      -->
+      <h2 class="section-head">Train a movement</h2>
+      <p class="section-sub">Pick a skill to see every game that works on it.</p>
+      <ul class="skill-grid" id="skill-grid"></ul>
+
+      <p class="fineprint">
+        Runs on Google MediaPipe Pose Landmarker, fully on-device. Every jump,
+        squat and punch is counted on this phone and nowhere else. Arrow keys
+        work as a backup.
+      </p>
+    </section>
+
+    <!-- ---------------- one motor skill ---------------- -->
+    <section id="screen-skill" class="screen scroll" hidden>
+      <header class="home-head">
+        <button type="button" id="btn-skill-back" class="icon-btn" aria-label="Back to all games">
+          <span aria-hidden="true">←</span>
+        </button>
+        <div class="home-title">
+          <h1 id="skill-title">Skill</h1>
+          <p id="skill-blurb"></p>
+        </div>
+      </header>
+      <ul class="game-grid" id="skill-games"></ul>
+      <p class="empty-note" id="skill-empty" hidden>No games train that on its own yet.</p>
+    </section>
+
+    <!-- ---------------- activity ---------------- -->
+    <section id="screen-activity" class="screen scroll" hidden>
+      <header class="home-head">
+        <button type="button" id="btn-activity-back" class="icon-btn" aria-label="Back to games">
+          <span aria-hidden="true">←</span>
+        </button>
+        <div class="home-title">
+          <h1>Your activity</h1>
+          <p id="activity-sub">Every round, and what your body did in it.</p>
+        </div>
+      </header>
+      <div id="activity-body"></div>
+    </section>
+
+    <!-- ---------------- how to play ---------------- -->
+    <section id="screen-howto" class="screen scroll" hidden>
+      <header class="home-head">
+        <button type="button" id="btn-howto-back" class="icon-btn" aria-label="Back to games">
+          <span aria-hidden="true">←</span>
+        </button>
+        <div class="home-title">
+          <h1 id="howto-title">How to play</h1>
+          <p id="howto-tagline"></p>
+        </div>
+      </header>
+
+      <div class="howto-body">
+        <figure class="howto-demo">
+          <canvas id="howto-canvas"></canvas>
+          <figcaption>
+            <span class="card-badge" id="howto-badge">Full body</span>
+            <span id="howto-framing"></span>
+          </figcaption>
+        </figure>
+
+        <h2 class="section-head">Move like this</h2>
+        <ol class="howto-steps" id="howto-steps"></ol>
+
+        <h2 class="section-head">In the game</h2>
+        <ul class="tips" id="howto-rules"></ul>
+
+        <p class="howto-skills" id="howto-skills"></p>
+      </div>
+
+      <div class="howto-actions">
+        <p class="loading-line" id="howto-loading">
+          <span class="spinner" aria-hidden="true"></span>
+          <span id="howto-load-text">Starting camera and pose tracking…</span>
+        </p>
+        <button type="button" id="btn-howto-play" class="primary wide" disabled>Play</button>
+      </div>
+    </section>
+
+    <!-- ---------------- loading ---------------- -->
+    <section id="screen-load" class="screen center" hidden>
+      <div class="panel narrow">
+        <h2>Getting ready</h2>
+        <p class="loading-line">
+          <span class="spinner" aria-hidden="true"></span>
+          <span id="load-text">Starting camera and pose tracking…</span>
+        </p>
+        <button type="button" id="btn-load-back" class="ghost">Back</button>
+      </div>
+    </section>
+
+    <!-- ---------------- calibrate ---------------- -->
+    <section id="screen-calibrate" class="screen center" hidden>
+      <div class="panel narrow">
+        <h2 id="calib-title">Step back</h2>
+        <p id="calib-hint" class="subtitle">Get yourself in frame</p>
+        <div class="bar"><div id="calib-fill"></div></div>
+        <div id="calib-camera-slot" class="calib-cam"></div>
+        <ul class="tips" id="calib-tips"></ul>
+        <button type="button" id="btn-calib-back" class="ghost">Back to games</button>
+      </div>
+    </section>
+
+    <!-- ---------------- play ---------------- -->
+    <section id="screen-play" class="screen play" hidden>
+      <div class="stage" id="stage">
+        <canvas id="game"></canvas>
+
+        <div class="hud-bar">
+          <button type="button" id="btn-quit" class="icon-btn" aria-label="Quit game">✕</button>
+          <div class="hud-group">
+            <span class="hud-chip"><b id="hud-score">0</b> pts</span>
+            <span class="hud-chip level" id="hud-level">Lv 1</span>
+            <span class="hud-chip" id="hud-time">0:00</span>
+            <span class="hud-chip combo" id="hud-combo" hidden>x3</span>
+          </div>
+          <div class="hud-lives" id="hud-lives" aria-label="Lives"></div>
+          <button type="button" id="btn-skeleton" class="icon-btn" aria-pressed="false">
+            Pose
+          </button>
+        </div>
+
+        <div class="pip" id="play-camera-slot"></div>
+
+        <div class="banner" id="banner" hidden>
+          <strong id="banner-title"></strong>
+          <span id="banner-sub"></span>
+        </div>
+
+        <div class="stage-note" id="stage-note" hidden>Step back into frame</div>
+
+        <!-- Shown with the Pose button, so a slow device can be diagnosed
+             from the device itself rather than guessed at. -->
+        <div class="perf-readout" id="perf-readout" hidden></div>
+
+        <div class="rotate-hint" id="rotate-hint" hidden>
+          <div class="rotate-phone" aria-hidden="true"></div>
+          <strong>Turn your phone sideways</strong>
+          <span id="rotate-why">This one is a side-scroller — it needs the width.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- results ---------------- -->
+    <section id="screen-rest" class="screen center" hidden>
+      <div class="panel narrow">
+        <p class="eyebrow" id="rest-game">Jump the Wall</p>
+        <h2 id="rest-title">Round complete</h2>
+        <div class="scoreboard">
+          <div class="stat big">
+            <span class="label">Score</span><span class="value" id="rest-score">0</span>
+          </div>
+          <div class="stat">
+            <span class="label">Best combo</span><span class="value" id="rest-combo">0</span>
+          </div>
+          <div class="stat">
+            <span class="label">Cleared</span><span class="value" id="rest-cleared">0</span>
+          </div>
+          <div class="stat">
+            <span class="label">Level</span><span class="value" id="rest-level">1</span>
+          </div>
+        </div>
+        <p id="rest-actions" class="action-line" hidden></p>
+        <p id="rest-note" class="subtitle"></p>
+        <div class="row">
+          <button type="button" id="btn-again" class="primary">Play again</button>
+          <button type="button" id="btn-home" class="ghost">All games</button>
+        </div>
+        <button type="button" id="btn-rest-feedback" class="linky">Tell us how that felt</button>
+      </div>
+    </section>
+
+    <!-- ---------------- feedback ---------------- -->
+    <section id="screen-feedback" class="screen scroll" hidden>
+      <header class="home-head">
+        <button type="button" id="btn-feedback-back" class="icon-btn" aria-label="Back">
+          <span aria-hidden="true">←</span>
+        </button>
+        <div class="home-title">
+          <h1>How was it?</h1>
+          <p>Anything at all helps — what was fun, what did not work, what felt wrong.</p>
+        </div>
+      </header>
+
+      <div class="feedback-body">
+        <fieldset class="fb-block">
+          <legend>Did it read your movements properly?</legend>
+          <div class="rating" id="fb-rating" role="radiogroup" aria-label="Rating"></div>
+        </fieldset>
+
+        <label class="fb-block">
+          <span class="fb-label">Which game?</span>
+          <select id="fb-game"></select>
+        </label>
+
+        <label class="fb-block">
+          <span class="fb-label">What happened?</span>
+          <textarea
+            id="fb-notes"
+            rows="5"
+            placeholder="It missed my punches unless I swung sideways…"
+          ></textarea>
+        </label>
+
+        <details class="fb-block fb-tech">
+          <summary>What gets sent with this</summary>
+          <p class="fb-hint">
+            Only the text above and the details below. No video, no images, and nothing about
+            your body — the camera never leaves your phone.
+          </p>
+          <pre id="fb-diagnostics"></pre>
+        </details>
+
+        <div class="row">
+          <button type="button" id="btn-fb-send" class="primary">Send feedback</button>
+          <button type="button" id="btn-fb-copy" class="ghost">Copy instead</button>
+        </div>
+        <p id="fb-status" class="subtitle" role="status"></p>
+      </div>
+    </section>
+
+    <!-- Moved between the calibrate screen and the play overlay at runtime. -->
+    <div id="camera-dock" hidden>
+      <div class="camera-wrap">
+        <video id="video" playsinline muted autoplay></video>
+        <canvas id="overlay"></canvas>
+      </div>
+    </div>
+
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>

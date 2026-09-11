@@ -1,0 +1,8 @@
+.superpowers/
+node_modules/
+tools/shot-*.png
+tools/shots/
+shots/
+out/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,19 @@
+{
+  "name": "motionplay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "test": "node --test \"stage0/js/**/*.test.js\"",
+    "check:ui": "node tools/preview.mjs",
+    "check:pose": "node tools/pose-smoke.mjs",
+    "check:physics": "node tools/physics-audit.mjs",
+    "check:pwa": "node tools/pwa-check.mjs",
+    "icons": "node tools/make-icons.mjs",
+    "share": "node tools/share.mjs",
+    "deploy": "node tools/deploy.mjs",
+    "hand-latency": "node tools/hand-latency.mjs",
+    "reach-accuracy": "node tools/reach-accuracy.mjs"
+  }
+}
