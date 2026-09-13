@@ -111,6 +111,18 @@ export const CUES = {
       { type: "tone", wave: "triangle", from: 1046, to: 1046, dur: 0.4, gain: 0.18, delay: 0.39 },
     ],
   },
+  /* Level-clear cheer: bright climb plus a soft chocolatey thud. */
+  celebrate: {
+    buzz: [18, 40, 18, 40, 50],
+    layers: [
+      { type: "tone", wave: "triangle", from: 392, to: 392, dur: 0.12, gain: 0.14 },
+      { type: "tone", wave: "triangle", from: 523, to: 523, dur: 0.12, gain: 0.14, delay: 0.1 },
+      { type: "tone", wave: "triangle", from: 659, to: 659, dur: 0.12, gain: 0.14, delay: 0.2 },
+      { type: "tone", wave: "triangle", from: 784, to: 784, dur: 0.14, gain: 0.16, delay: 0.3 },
+      { type: "tone", wave: "square", from: 1046, to: 1319, dur: 0.28, gain: 0.12, delay: 0.42 },
+      { type: "noise", filter: "lowpass", from: 900, to: 200, dur: 0.2, gain: 0.1, delay: 0.08 },
+    ],
+  },
   ui: {
     buzz: 6,
     layers: [{ type: "tone", wave: "triangle", from: 520, to: 620, dur: 0.06, gain: 0.1 }],
