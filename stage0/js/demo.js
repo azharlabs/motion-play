@@ -439,11 +439,11 @@ function drawBall(ctx, x, y, r) {
 /**
  * The thing at the end of a reach.
  *
- * Balloon Pop and Goalkeeper are the same movement to a body and nothing like
- * each other to look at, and a keeper shown popping a balloon on a string has
- * been told about the wrong game. So the movement is shared and the prop is
- * not: a balloon waits to be touched and bursts, a ball arrives under its own
- * steam and has to be stopped.
+ * Several games ask for the same stretch of the arm and are nothing alike to
+ * look at. Balloon Pop waits for a touch and bursts; Goalkeeper stops a ball
+ * that arrives on its own; Hand Snake leads a body to an apple; Hand Tetris
+ * slides a block; Orbit Keeper taps floating balls. The movement is shared
+ * and the prop is not — `meta.reachFor` picks which picture the player gets.
  */
 function balloonProp(target, met, accent) {
   return {
@@ -540,8 +540,237 @@ function ballProp(target, side, local, accent) {
   };
 }
 
-/** Stretch out and touch it: balloons, and the ball a keeper saves. */
+/** A red apple with a stalk and a leaf — the thing Hand Snake is led onto. */
+function drawApple(ctx, x, y, r) {
+  const skin = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r * 1.1);
+  skin.addColorStop(0, "#fca5a5");
+  skin.addColorStop(0.6, "#ef4444");
+  skin.addColorStop(1, "#991b1b");
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#7c4a12";
+  ctx.lineWidth = Math.max(1.6, r * 0.18);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(x, y - r * 0.85);
+  ctx.quadraticCurveTo(x + r * 0.2, y - r * 1.35, x + r * 0.08, y - r * 1.45);
+  ctx.stroke();
+  ctx.fillStyle = "#4d7c0f";
+  ctx.beginPath();
+  ctx.ellipse(x + r * 0.55, y - r * 1.2, r * 0.42, r * 0.2, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/**
+ * Lead a snake to an apple.
+ *
+ * Hand Snake is not "reach out and poke something". The hand travels, the
+ * snake banks after it, and the apple is where you are taking it. Sampling
+ * the paw along a curved path and stroking those samples as a tapering body
+ * is the same picture the game itself draws.
+ */
+function snakeReachClip(p, accent) {
+  const apple = inReach(1, 62, BODY.shoulderY - 56);
+  // A wide arc that ends on the apple, so the body has room to trail behind.
+  // Allow u < 0 so the body keeps length at the start of the loop instead of
+  // collapsing into a green blob. Path stays on Pip's right so the body never
+  // drapes across the face on the way to the apple.
+  const along = (u) => {
+    const t = u <= 0 ? u : u >= 1 ? 1 : ease(u);
+    const x = 22 + t * 40 + Math.sin(t * Math.PI) * 10;
+    const y = BODY.shoulderY + 48 - t * 108;
+    return inReach(1, x, y);
+  };
+  /*
+   * The hand leads; the snake banks after it. Putting the head on the paw made
+   * the body read as a green hose glued to the arm — the bug we are fixing,
+   * just in another colour. A short lag keeps the head visible behind the paw
+   * and matches how the game actually steers.
+   */
+  const lag = 0.12;
+  const paw = along(p);
+  const head = along(p - lag);
+  const trail = [];
+  for (let i = 16; i >= 0; i -= 1) {
+    trail.push(along(p - lag - i * 0.04));
+  }
+  const gap = Math.hypot(head.x - apple.x, head.y - apple.y);
+  const eaten = gap < 18 && p > 0.72;
+
+  return {
+    pose: { effort: 0.55, arms: { right: paw } },
+    back: (ctx) => {
+      if (!eaten) drawApple(ctx, apple.x, apple.y, 12);
+
+      // Lead line from the hand to the snake, so the follow is explicit.
+      ctx.strokeStyle = "rgba(255,255,255,0.35)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(paw.x, paw.y);
+      ctx.lineTo(head.x, head.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Body behind the head: dark outline, green fill, light ridge on top.
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      for (const [width, colour] of [
+        [16, "rgba(22,101,52,0.55)"],
+        [12, accent],
+        [5, "rgba(190,242,100,0.55)"],
+      ]) {
+        ctx.strokeStyle = colour;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        ctx.moveTo(trail[0].x, trail[0].y);
+        for (const pt of trail.slice(1)) ctx.lineTo(pt.x, pt.y);
+        ctx.stroke();
+      }
+    },
+    front: (ctx) => {
+      // Head drawn in front of Pip so the paw never covers it.
+      const hx = head.x;
+      const hy = head.y;
+      const ang = Math.atan2(paw.y - head.y, paw.x - head.x);
+      ctx.save();
+      ctx.translate(hx, hy);
+      ctx.rotate(ang);
+      ctx.fillStyle = "#16a34a";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 12, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(4, -3.5, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#0f172a";
+      ctx.beginPath();
+      ctx.arc(5, -3.5, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      if (!eaten) return;
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      for (let i = 0; i < 6; i += 1) {
+        const a = (i / 6) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(apple.x + Math.cos(a) * 10, apple.y + Math.sin(a) * 10);
+        ctx.lineTo(apple.x + Math.cos(a) * 20, apple.y + Math.sin(a) * 20);
+        ctx.stroke();
+      }
+    },
+  };
+}
+
+/** A bevelled tetromino cell, matching the look of Hand Tetris itself. */
+function drawBlockCell(ctx, x, y, s, colour) {
+  const r = s * 0.2;
+  ctx.fillStyle = colour;
+  roundRect(ctx, x, y, s, s, r);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.42)";
+  roundRect(ctx, x + s * 0.12, y + s * 0.1, s * 0.76, s * 0.24, s * 0.12);
+  ctx.fill();
+}
+
+/**
+ * Slide a falling block left and right with the hand.
+ *
+ * Hand Tetris steers by sweeping an arm across the body; the demonstration
+ * has to show a piece moving with the paw, not a balloon waiting to be poked.
+ */
+function blockReachClip(p, accent) {
+  const wave = Math.sin(p * Math.PI * 2);
+  const slide = wave * 48;
+  const y = BODY.shoulderY - 8;
+  const paw = inReach(1, slide + 18, y + 10);
+  const cell = 14;
+  // An L piece hovering above the hand, drifting with the sweep.
+  const ox = slide - 8;
+  const oy = BODY.shoulderY - 52;
+  const cells = [
+    [0, 1],
+    [1, 1],
+    [2, 1],
+    [2, 0],
+  ];
+
+  return {
+    pose: { effort: Math.abs(wave) * 0.5, arms: { right: paw } },
+    back: (ctx) => {
+      // Soft well so the piece reads as sitting in a playfield.
+      ctx.fillStyle = "rgba(15,23,42,0.35)";
+      roundRect(ctx, -70, BODY.shoulderY - 70, 140, 58, 10);
+      ctx.fill();
+      for (const [cx, cy] of cells) {
+        drawBlockCell(ctx, ox + cx * cell, oy + cy * cell, cell - 2, accent);
+      }
+    },
+    front: (ctx) => {
+      arrow(ctx, Math.sign(wave || 1) * (EDGE - 18), BODY.shoulderY + 18, Math.sign(wave || 1), 0, accent);
+    },
+  };
+}
+
+/**
+ * Tap a floating ball back up — Orbit Keeper's reach, not a balloon on a string.
+ */
+function orbitReachClip(p, accent) {
+  const side = p < 0.5 ? 1 : -1;
+  const local = (p % 0.5) / 0.5;
+  const out = there(local, 0.1, 0.8);
+  const key = side < 0 ? "left" : "right";
+  const target = inReach(side, side * 50, BODY.shoulderY - 48);
+  const from = { x: side * (SHOULDER.x + 11), y: SHOULDER.y + 56 };
+  const paw = {
+    x: from.x + (target.x - from.x) * out,
+    y: from.y + (target.y - from.y) * out,
+  };
+  // Ball drifts down then gets tapped back up when the paw meets it.
+  const hit = local > 0.42 && local < 0.58;
+  const drop = local < 0.5 ? ease(local / 0.5) : 1;
+  const loft = local > 0.5 ? ease((local - 0.5) / 0.5) : 0;
+  const ball = {
+    x: target.x,
+    y: target.y - 36 + drop * 36 - loft * 50,
+  };
+
+  return {
+    pose: { effort: out * 0.75, arms: { [key]: paw } },
+    back: (ctx) => {
+      // A second ball hanging elsewhere, so it reads as juggling rather than
+      // a single save.
+      drawBall(ctx, -side * 44, BODY.shoulderY - 70, 10);
+      drawBall(ctx, ball.x, ball.y, 12);
+    },
+    front: (ctx) => {
+      if (!hit) return;
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      for (let i = 0; i < 5; i += 1) {
+        const a = -Math.PI / 2 + ((i - 2) / 5) * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(paw.x + Math.cos(a) * 12, paw.y + Math.sin(a) * 12);
+        ctx.lineTo(paw.x + Math.cos(a) * 22, paw.y + Math.sin(a) * 22);
+        ctx.stroke();
+      }
+    },
+  };
+}
+
+/** Stretch out and touch it: balloons, balls, snakes, blocks, orbits. */
 function reachClip(p, accent, meta) {
+  const kind = meta?.reachFor ?? "balloon";
+  if (kind === "snake") return snakeReachClip(p, accent);
+  if (kind === "block") return blockReachClip(p, accent);
+  if (kind === "orbit") return orbitReachClip(p, accent);
+
   const side = p < 0.5 ? 1 : -1;
   const local = (p % 0.5) / 0.5;
   const out = there(local, 0.1, 0.8);
@@ -558,9 +787,7 @@ function reachClip(p, accent, meta) {
   };
 
   const prop =
-    meta?.reachFor === "ball"
-      ? ballProp(target, side, local, accent)
-      : balloonProp(target, met, accent);
+    kind === "ball" ? ballProp(target, side, local, accent) : balloonProp(target, met, accent);
 
   return { pose: { effort: out * 0.8, arms: { [key]: paw } }, ...prop };
 }
@@ -628,8 +855,8 @@ function swipeClip(p, accent) {
   };
 }
 
-/** Both arms overhead and down again, which is what lifts Sky Flap. */
-function raiseClip(p, accent) {
+/** Both arms overhead and down again — Sky Flap climbs; Hand Tetris turns. */
+function raiseClip(p, accent, meta) {
   const up = there(p, 0.1, 0.9);
   /*
    * Hung off the shoulder rather than pinned to a spot in the picture. The
@@ -639,6 +866,7 @@ function raiseClip(p, accent) {
    */
   const dx = 11 - up * 13;
   const dy = 56 - up * 118;
+  const turn = meta?.raiseFor === "turn";
   return {
     pose: {
       effort: up * 0.6,
@@ -649,6 +877,19 @@ function raiseClip(p, accent) {
       },
     },
     back: (ctx) => {
+      if (turn) {
+        // A piece spinning above the head as the hand lifts to rotate it.
+        const cell = 13;
+        const rot = up * Math.PI / 2;
+        ctx.save();
+        ctx.translate(0, BODY.headY - 36);
+        ctx.rotate(rot);
+        for (const [cx, cy] of [[-1, 0], [0, 0], [1, 0], [0, -1]]) {
+          drawBlockCell(ctx, cx * cell - cell / 2, cy * cell - cell / 2, cell - 2, accent);
+        }
+        ctx.restore();
+        return;
+      }
       // The gap it is climbing towards.
       ctx.strokeStyle = `rgba(255,255,255,${0.25 + up * 0.4})`;
       ctx.lineWidth = 3;
@@ -665,13 +906,35 @@ function raiseClip(p, accent) {
   };
 }
 
-/** Shoulders over, feet planted. */
-function leanClip(p, accent) {
+/** Shoulders over, feet planted — lanes for Runner, gates for Slalom. */
+function leanClip(p, accent, meta) {
   const wave = Math.sin(p * Math.PI * 2);
   const lean = wave * 22;
+  const gates = meta?.leanFor === "gates";
   return {
     pose: { lean, headTilt: -lean * 0.006, effort: Math.abs(wave) * 0.5 },
     back: (ctx) => {
+      if (gates) {
+        // A red/blue flag pair with a band between them — pass inside.
+        const y = -8;
+        const half = 38;
+        const cx = wave * 18;
+        for (const [s, colour] of [[-1, "#ef4444"], [1, "#3b82f6"]]) {
+          const x = cx + s * half;
+          ctx.fillStyle = colour;
+          ctx.fillRect(x - 2, y - 28, 4, 36);
+          ctx.beginPath();
+          ctx.moveTo(x, y - 28);
+          ctx.lineTo(x + s * 18, y - 20);
+          ctx.lineTo(x, y - 12);
+          ctx.closePath();
+          ctx.fill();
+        }
+        const inside = Math.abs(wave) < 0.55;
+        ctx.fillStyle = inside ? "rgba(34,197,94,0.28)" : "rgba(148,163,184,0.18)";
+        ctx.fillRect(cx - half + 4, y - 6, half * 2 - 8, 10);
+        return;
+      }
       for (const s of [-1, 0, 1]) {
         const live = Math.abs(wave) > 0.45 && Math.sign(wave) === s;
         ctx.fillStyle = live ? accent : "rgba(148,163,184,0.28)";
@@ -762,8 +1025,59 @@ function duckClip(p, accent) {
 /** The fruit the slice clip demonstrates on: the game's most obvious one. */
 const MELON = FRUIT[0];
 
-/** Find the shape, then stop moving. */
-function holdClip(p, accent) {
+/** Find the shape, then stop moving — or freeze when the light turns red. */
+function holdClip(p, accent, meta) {
+  if (meta?.holdFor === "freeze") {
+    // Green: march and wave. Red: statue. The light is the whole instruction.
+    const green = p < 0.48;
+    const into = green ? there(p / 0.48, 0.05, 0.95) : 0;
+    const march = green ? Math.sin(p * Math.PI * 8) * 0.35 : 0;
+    return {
+      pose: {
+        effort: green ? 0.45 : 0.15,
+        lean: green ? march * 6 : 0,
+        arms: {
+          left: {
+            dx: -(14 + (green ? into * 8 : 0)),
+            dy: 40 - (green ? into * 36 + Math.abs(march) * 10 : 0),
+          },
+          right: {
+            dx: 14 + (green ? into * 8 : 0),
+            dy: 40 - (green ? into * 28 + Math.abs(march) * 8 : 0),
+          },
+        },
+      },
+      back: (ctx) => {
+        const lx = -72;
+        const top = BODY.shoulderY - 50;
+        const r = 11;
+        const gap = 28;
+        ctx.fillStyle = "#1f2937";
+        roundRect(ctx, lx - r * 1.6, top - r * 1.5, r * 3.2, gap * 2 + r * 3.2, 8);
+        ctx.fill();
+        const lit = green ? 2 : 0;
+        const colours = ["#ef4444", "rgba(255,255,255,0.14)", "#22c55e"];
+        colours.forEach((colour, i) => {
+          const on = i === lit;
+          if (on) {
+            const glow = ctx.createRadialGradient(lx, top + i * gap, r * 0.2, lx, top + i * gap, r * 2.2);
+            glow.addColorStop(0, i === 0 ? "rgba(239,68,68,0.55)" : "rgba(34,197,94,0.55)");
+            glow.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(lx, top + i * gap, r * 2.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.fillStyle = on ? colour : "rgba(255,255,255,0.14)";
+          ctx.beginPath();
+          ctx.arc(lx, top + i * gap, r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      },
+      front: () => {},
+    };
+  }
+
   const into = ease(clamp(p / 0.3, 0, 1));
   const held = clamp((p - 0.3) / 0.6, 0, 1);
   // Out into a star and stopped there.
