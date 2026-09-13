@@ -15,6 +15,11 @@ function rig(opts = {}) {
 }
 
 describe("Feedback cues", () => {
+  it("defines a celebrate cue for level clears", () => {
+    assert.ok(CUES.celebrate, "level-clear cheer must exist");
+    assert.ok(CUES.celebrate.layers.length >= 3);
+  });
+
   it("plays every layer of a cue", () => {
     const { fb, layers } = rig();
     assert.equal(fb.cue("thud", { now: 0 }), true);

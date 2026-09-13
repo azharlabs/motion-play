@@ -9,6 +9,7 @@ import { GAMES, gameById } from "./games/registry.js";
 import { drawCardArt } from "./games/art.js";
 import { drawSkillArt } from "./skill-art.js";
 import { drawLevelBanner } from "./games/common.js";
+import { createCelebration } from "./celebration.js";
 import { createFeedback } from "./feedback.js";
 import { PerfGovernor } from "./perf.js";
 import { SKILLS, ACTIONS, skillById, actionById } from "./skills.js";
@@ -122,6 +123,7 @@ const readMuted = () => {
   }
 };
 const fx = createFeedback({ muted: readMuted() });
+const celebration = createCelebration({ parent: els.stage, fx });
 
 /*
  * Personal bests, one entry per game. Kept in local storage so a level you
@@ -197,6 +199,7 @@ let countdownEnd = 0;
 let spokenCount = -1;
 let roundBegun = false;
 let roundBanked = false;
+let playLevel = 1;
 let roundStartedAt = 0;
 let fpsSamples = [];
 let debugOn = false;
@@ -731,6 +734,8 @@ function startRound(now) {
   spokenCount = -1;
   roundBegun = false;
   roundBanked = false;
+  playLevel = 1;
+  celebration.hide();
   fpsSamples = [];
   livesKey = "";
   els.stage.classList.toggle("camera-backdrop", entry.backdrop === "camera");
@@ -780,6 +785,7 @@ function bankRound() {
 }
 
 function finishRound() {
+  celebration.hide();
   fx.cue("finish");
   const { summary: s, beaten } = bankRound() ?? { summary: game.summary(), beaten: false };
   const avg = fpsSamples.length ? fpsSamples.reduce((a, b) => a + b, 0) / fpsSamples.length : 0;
@@ -956,7 +962,9 @@ function runPlay(s, now, dt) {
   const view = currentView();
 
   const counting = now < countdownEnd;
-  if (!counting) {
+  const cheering = celebration.active;
+
+  if (!counting && !cheering) {
     // Start the clock on the first real frame, not when the countdown began.
     // Otherwise the countdown eats a few seconds of every round, and the
     // difficulty ramp is already ahead of what the player has actually seen.
@@ -964,11 +972,19 @@ function runPlay(s, now, dt) {
       roundBegun = true;
       roundStartedAt = now;
       game.start(now);
+      playLevel = 1;
     }
     const ev = game.tick(dt, s, now, view);
     if (ev.over) {
       finishRound();
       return;
+    }
+    const leveled = game.hud().level ?? 1;
+    // Pause on level clear: chocolate shower + dancing Pip + Continue.
+    // Kids should celebrate before the next wave, not auto-skip the moment.
+    if (leveled > playLevel) {
+      playLevel = leveled;
+      celebration.show(playLevel, now);
     }
   }
 
@@ -985,12 +1001,18 @@ function runPlay(s, now, dt) {
   ctx.clearRect(0, 0, view.w, view.h);
 
   if (entry.backdrop === "camera") drawCameraBackdrop(ctx, view);
-  game.draw(ctx, view, s, now, dt);
-  drawLevelBanner(ctx, view, hud.level ?? 1, hud.levelFlash ?? 0);
+  // While cheering, keep painting the frozen world under the overlay (dt 0 so
+  // game-local sparkles do not keep drifting as if time still ran).
+  game.draw(ctx, view, s, now, cheering ? 0 : dt);
+  if (!cheering) {
+    drawLevelBanner(ctx, view, hud.level ?? 1, hud.levelFlash ?? 0);
+  } else {
+    celebration.frame(now, dt);
+  }
 
-  setHidden(els.stageNote, s.inFrame || counting);
+  setHidden(els.stageNote, s.inFrame || counting || cheering);
 
-  if (rotate) {
+  if (rotate || cheering) {
     setHidden(els.banner, true);
   } else if (counting) {
     const left = Math.ceil((countdownEnd - now) / 1000);
@@ -1058,6 +1080,7 @@ function loop(now) {
 /* ---------------- wiring ---------------- */
 
 function goHome() {
+  celebration.hide();
   bankRound();
   game = null;
   signals = null;

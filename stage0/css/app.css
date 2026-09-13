@@ -1341,3 +1341,152 @@ fieldset.fb-block {
   color: var(--teal-dark);
   text-decoration: underline;
 }
+
+/* ---- level-clear celebration (kids pause + cheer) ---- */
+
+.celebrate {
+
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 8;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: calc(var(--safe-t) + 12px) 16px calc(var(--safe-b) + 16px);
+
+  background: rgba(12, 20, 28, 0.55);
+
+  pointer-events: auto;
+
+}
+
+
+
+.celebrate[hidden] {
+
+  display: none;
+
+}
+
+
+
+.celebrate-fx {
+
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+
+  height: 100%;
+
+  pointer-events: none;
+
+}
+
+
+
+.celebrate-card {
+
+  position: relative;
+
+  z-index: 1;
+
+  width: min(340px, 92vw);
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 18px 18px 16px;
+
+  border-radius: 22px;
+
+  background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
+
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(249, 115, 22, 0.35);
+
+  text-align: center;
+
+}
+
+
+
+.celebrate-mascot {
+
+  width: 120px;
+
+  height: 120px;
+
+  display: block;
+
+}
+
+
+
+.celebrate-eyebrow {
+
+  margin: 0;
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.04em;
+
+  text-transform: uppercase;
+
+  color: #c2410c;
+
+}
+
+
+
+.celebrate-title {
+
+  font-size: clamp(28px, 9vw, 40px);
+
+  line-height: 1.05;
+
+  color: #9a3412;
+
+}
+
+
+
+.celebrate-sub {
+
+  margin: 0 0 8px;
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  color: #7c2d12;
+
+}
+
+
+
+.celebrate-continue {
+
+  width: 100%;
+
+  flex: 0 0 auto;
+
+  font-size: 17px;
+
+  min-height: 50px;
+
+}
+
