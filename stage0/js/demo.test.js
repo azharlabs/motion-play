@@ -172,6 +172,82 @@ describe("drawing the demonstration", () => {
   });
 
   /*
+   * Shared movements must not share props. Hand Snake was falling through to
+   * the balloon default — a fox swatting a green balloon while the copy talked
+   * about apples and a tail — which is how the how-to canvas lied.
+   */
+  it("gives every reach game its own prop, not a shared balloon", () => {
+    const propsOf = (id) => {
+      const game = GAMES.find((g) => g.id === id);
+      const ctx = stubCtx();
+      for (let t = 0; t <= CLIPS.reach.ms; t += 40) {
+        drawHowTo(ctx, { w: 300, h: 250 }, game, t);
+      }
+      return ctx.calls;
+    };
+    // Balloon body is a tall ellipse (17×20); other reach props do not draw that.
+    const balloons = (calls) =>
+      calls.filter((c) => c[0] === "ellipse" && c[3] === 17 && c[4] === 20).length;
+
+    assert.ok(balloons(propsOf("balloon-pop")) > 0, "balloon-pop lost its balloon");
+    for (const id of ["goalkeeper", "hand-snake", "hand-tetris", "orbit-keeper"]) {
+      assert.equal(balloons(propsOf(id)), 0, `${id} is being shown a balloon`);
+    }
+
+    // Hand Snake strokes a multi-point body and paints an apple (arc + leaf).
+    const snake = propsOf("hand-snake");
+    const bodyLines = snake.filter((c) => c[0] === "lineTo").length;
+    assert.ok(bodyLines > 40, `hand-snake body too short (${bodyLines} lineTo)`);
+    assert.ok(snake.some((c) => c[0] === "arc"), "hand-snake drew no apple");
+    assert.ok(snake.some((c) => c[0] === "ellipse"), "hand-snake drew no snake head");
+
+    // Hand Tetris slides bevelled cells (rounded rect paths), not a balloon.
+    const tetris = propsOf("hand-tetris");
+    assert.ok(tetris.filter((c) => c[0] === "arcTo").length > 10, "hand-tetris drew no blocks");
+
+    // Orbit Keeper juggles balls (arcs without balloon strings).
+    assert.ok(propsOf("orbit-keeper").some((c) => c[0] === "arc"), "orbit-keeper drew no ball");
+  });
+
+  it("shows ski gates for slalom and a traffic light for freeze frame", () => {
+    const draw = (id) => {
+      const game = GAMES.find((g) => g.id === id);
+      const ctx = stubCtx();
+      const total = clipsFor(game).reduce((sum, a) => sum + CLIPS[a].ms, 0);
+      for (let t = 0; t <= total; t += 40) drawHowTo(ctx, { w: 300, h: 250 }, game, t);
+      return ctx.calls;
+    };
+
+    const ski = draw("ski-slalom");
+    // Gates are drawn with fillRect poles, not the three lane ellipses alone.
+    assert.ok(ski.some((c) => c[0] === "fillRect"), "ski-slalom drew no gate poles");
+
+    const freeze = draw("freeze-frame");
+    assert.ok(freeze.some((c) => c[0] === "arc"), "freeze-frame drew no traffic lamps");
+    // Pose Match keeps the dashed silhouette; freeze should not rely on it alone.
+    const pose = draw("pose-match");
+    const dashes = (calls) => calls.filter((c) => c[0] === "setLineDash").length;
+    assert.ok(dashes(pose) > dashes(freeze), "freeze-frame still looks like pose-match");
+  });
+
+  it("registry props match the shared-movement games that need them", () => {
+    const need = {
+      "balloon-pop": null,
+      goalkeeper: "ball",
+      "hand-snake": "snake",
+      "hand-tetris": "block",
+      "orbit-keeper": "orbit",
+    };
+    for (const [id, want] of Object.entries(need)) {
+      const game = GAMES.find((g) => g.id === id);
+      assert.equal(game.reachFor ?? null, want, `${id} reachFor`);
+    }
+    assert.equal(GAMES.find((g) => g.id === "ski-slalom").leanFor, "gates");
+    assert.equal(GAMES.find((g) => g.id === "freeze-frame").holdFor, "freeze");
+    assert.equal(GAMES.find((g) => g.id === "hand-tetris").raiseFor, "turn");
+  });
+
+  /*
    * The arm is only at full stretch for a moment in the middle of the reach.
    * The save has to happen inside it, or the picture is a ball hanging in the
    * air beside a paw that has already started coming back.

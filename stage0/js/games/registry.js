@@ -23,9 +23,11 @@
  * Both draw from the vocabularies in ../skills.js, and a game listing anything
  * outside them fails its tests.
  *
- * `reachFor` names what the how-to demonstration puts at the end of a reach.
- * Two games ask for the same movement and are nothing alike to look at, and a
- * keeper shown popping a balloon has been told about the wrong game.
+ * `reachFor` / `leanFor` / `holdFor` / `raiseFor` name what the how-to
+ * demonstration puts on screen for a shared movement. Several games ask for
+ * the same stretch, lean, hold or raise and are nothing alike to look at —
+ * a snake shown popping a balloon, or a skier shown changing lanes, has been
+ * told about the wrong game.
  */
 export const GAMES = [
   {
@@ -131,6 +133,7 @@ export const GAMES = [
     needs: "full",
     backdrop: "scene",
     accent: "#38bdf8",
+    leanFor: "gates",
     howTo: ["Lean to steer down the hill", "Pass inside the flags"],
     ready: true,
     load: () => import("./ski-slalom.js"),
@@ -170,6 +173,7 @@ export const GAMES = [
     needs: "upper",
     backdrop: "camera",
     accent: "#22c55e",
+    reachFor: "snake",
     howTo: [
       "Hold a hand up and move it — the snake follows",
       "Lead it onto the apples to grow",
@@ -187,6 +191,8 @@ export const GAMES = [
     needs: "upper",
     backdrop: "camera",
     accent: "#60a5fa",
+    reachFor: "block",
+    raiseFor: "turn",
     howTo: [
       "Sweep a hand across to slide the block",
       "Lift a hand above your shoulder to turn it",
@@ -204,6 +210,7 @@ export const GAMES = [
     needs: "full",
     backdrop: "camera",
     accent: "#ef4444",
+    holdFor: "freeze",
     howTo: [
       "March and wave while the light is green",
       "The moment it turns red, freeze",
@@ -238,6 +245,7 @@ export const GAMES = [
     needs: "full",
     backdrop: "camera",
     accent: "#38bdf8",
+    reachFor: "orbit",
     howTo: [
       "The balls bounce off your real arms and legs",
       "Swing to send one further, hold still to tap it up",
