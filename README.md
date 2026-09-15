@@ -26,9 +26,9 @@ The current product catalogue contains 15 experiences built on the existing Stag
 
 The stable internal Stage 0 game IDs are temporarily retained so existing personal bests, activity history, artwork, tests and lazy-loaded engine modules remain compatible during the migration.
 
-## Primary path: controller hub → sticky embeds
+## Primary path: skill grid → howto → sticky embeds
 
-The default Stage 0 entry redirects to `stage0/controller.html`, a **MotionPlay-themed controller shell** that lists all 15 sticky titles. Picking a title opens the same shell’s play chrome (`controller.html?card=<id>` or `play.html?card=<id>`), which embeds a MotionPlay-built mini-game under `stage0/external-games/` and drives it with pose → key/pose bridge (same-origin iframe, no extension required on phone).
+The default Stage 0 entry is `stage0/index.html`: **mascot + logo, skill card grid, howto with GIF/canvas preview, then Play**. Play opens `play.html?card=<id>`, which embeds a MotionPlay-built mini-game under `stage0/external-games/` and drives it with pose → key/pose bridge (same-origin iframe, no extension required on phone). No profile dropdown on that path.
 
 Action families covered by dedicated embeds (remaining cards reuse the closest family with a distinct skin/title):
 
@@ -40,9 +40,9 @@ Action families covered by dedicated embeds (remaining cards reuse the closest f
 - Raise: `raise-flap`
 - Squat / lean platformer: `squat-island`
 
-Legacy Stage 0 canvas arcade engines are **not** mixed into the controller hub. They remain available only behind an explicit deep link: `/?legacy=1` (or `index.html?legacy=1`).
+Legacy Stage 0 canvas arcade engines are **not** listed on the skill grid. They remain available only behind an explicit deep link: `/?legacy=1` (or `index.html?legacy=1`). `controller.html` stays as an optional advanced library (profile picker), not the default home.
 
-Play chrome (`controller.html` / `play.html`) and embed shells share MotionPlay CSS tokens (teal / orange, Nunito, cards, buttons) via `css/play-chrome.css` and `external-games/_shared/shell.css`.
+Play chrome (`play.html` / `controller.html`) and embed shells share MotionPlay CSS tokens (teal / orange, Nunito, cards, buttons) via `css/play-chrome.css` and `external-games/_shared/shell.css`.
 
 ## External game controller mode
 
