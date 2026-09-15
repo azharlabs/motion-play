@@ -1,20 +1,20 @@
 /**
  * MotionPlay active-play catalogue.
  *
- * The public catalogue is intentionally product-led: children pick an
- * experience, while the motion engine underneath records the physical actions
- * performed during the round. Some entries currently reuse a proven Stage 0
- * engine while their dedicated visuals/mechanics are being built. `artId`
- * keeps the matching Stage 0 card artwork during that transition.
+ * The public catalogue is product-led: children pick an experience, while the
+ * motion engine underneath records the physical actions performed during the
+ * round. The stable Stage 0 IDs are intentionally retained so existing card
+ * artwork, personal bests and activity history continue to resolve while each
+ * experience is progressively upgraded with its own mechanics and visuals.
  *
- * `skills` describe the movement focus used for browsing. `actions` are the
- * countable motions stored in the activity history. `benefits` are safe,
- * non-medical activity-focus labels resolved by ../wellness.js.
+ * `skills` describe the motor-skill focus used for browsing. `actions` are the
+ * countable motions stored in activity history. `benefits` use the safe,
+ * non-medical activity-focus vocabulary in ../wellness.js.
  */
 export const GAMES = [
   {
-    id: "motion-runner",
-    artId: "jump-the-wall",
+    id: "jump-the-wall",
+    productId: "motion-runner",
     skills: ["lower-body", "agility", "reaction"],
     actions: ["jump", "duck"],
     benefits: ["active-play", "lower-body", "reaction", "motor-planning"],
@@ -30,7 +30,7 @@ export const GAMES = [
   },
   {
     id: "fruit-slice",
-    artId: "fruit-slice",
+    productId: "fruit-slice",
     skills: ["coordination", "upper-body", "reaction"],
     actions: ["swipe"],
     benefits: ["active-play", "coordination", "upper-body", "cross-body", "reaction"],
@@ -44,8 +44,8 @@ export const GAMES = [
     load: () => import("./fruit-slice.js"),
   },
   {
-    id: "kart-racer",
-    artId: "ski-slalom",
+    id: "ski-slalom",
+    productId: "kart-racer",
     skills: ["balance", "core", "agility"],
     actions: ["lean"],
     benefits: ["active-play", "balance", "postural-control", "reaction"],
@@ -60,8 +60,8 @@ export const GAMES = [
     load: () => import("./ski-slalom.js"),
   },
   {
-    id: "goalkeeper-hero",
-    artId: "goalkeeper",
+    id: "goalkeeper",
+    productId: "goalkeeper-hero",
     skills: ["reach", "reaction", "coordination"],
     actions: ["reach"],
     benefits: ["active-play", "coordination", "upper-body", "reaction", "mobility"],
@@ -76,8 +76,8 @@ export const GAMES = [
     load: () => import("./goalkeeper.js"),
   },
   {
-    id: "boxing-challenge",
-    artId: "punch-out",
+    id: "punch-out",
+    productId: "boxing-challenge",
     skills: ["upper-body", "reaction", "coordination"],
     actions: ["punch"],
     benefits: ["active-play", "coordination", "upper-body", "reaction"],
@@ -91,8 +91,8 @@ export const GAMES = [
     load: () => import("./punch-out.js"),
   },
   {
-    id: "dance-copycat",
-    artId: "pose-match",
+    id: "pose-match",
+    productId: "dance-copycat",
     skills: ["posture", "balance", "coordination"],
     actions: ["hold"],
     benefits: ["active-play", "coordination", "balance", "postural-control", "motor-planning"],
@@ -106,8 +106,8 @@ export const GAMES = [
     load: () => import("./pose-match.js"),
   },
   {
-    id: "jump-island",
-    artId: "squat-rush",
+    id: "squat-rush",
+    productId: "jump-island",
     skills: ["lower-body", "core", "agility"],
     actions: ["squat"],
     benefits: ["active-play", "lower-body", "postural-control"],
@@ -121,8 +121,8 @@ export const GAMES = [
     load: () => import("./squat-rush.js"),
   },
   {
-    id: "balloon-pop-adventure",
-    artId: "balloon-pop",
+    id: "balloon-pop",
+    productId: "balloon-pop-adventure",
     skills: ["reach", "coordination", "upper-body"],
     actions: ["reach"],
     benefits: ["active-play", "coordination", "upper-body", "mobility", "cross-body"],
@@ -136,8 +136,8 @@ export const GAMES = [
     load: () => import("./balloon-pop.js"),
   },
   {
-    id: "ninja-dodge",
-    artId: "lane-runner",
+    id: "lane-runner",
+    productId: "ninja-dodge",
     skills: ["balance", "core", "reaction"],
     actions: ["lean"],
     benefits: ["active-play", "balance", "reaction", "motor-planning"],
@@ -151,8 +151,8 @@ export const GAMES = [
     load: () => import("./lane-runner.js"),
   },
   {
-    id: "animal-adventure",
-    artId: "body-drums",
+    id: "body-drums",
+    productId: "animal-adventure",
     skills: ["coordination", "lower-body", "reaction"],
     actions: ["punch", "kick"],
     benefits: ["active-play", "coordination", "lower-body", "upper-body", "reaction"],
@@ -166,8 +166,8 @@ export const GAMES = [
     load: () => import("./body-drums.js"),
   },
   {
-    id: "space-defender",
-    artId: "sky-flap",
+    id: "sky-flap",
+    productId: "space-defender",
     skills: ["upper-body", "coordination", "reaction"],
     actions: ["raise"],
     benefits: ["active-play", "upper-body", "coordination", "mobility"],
@@ -181,8 +181,8 @@ export const GAMES = [
     load: () => import("./sky-flap.js"),
   },
   {
-    id: "treasure-catch",
-    artId: "orbit-keeper",
+    id: "orbit-keeper",
+    productId: "treasure-catch",
     skills: ["coordination", "reaction", "balance"],
     actions: ["reach", "kick"],
     benefits: ["active-play", "coordination", "reaction", "upper-body", "lower-body"],
@@ -197,24 +197,24 @@ export const GAMES = [
     load: () => import("./orbit-keeper.js"),
   },
   {
-    id: "balance-bridge",
-    artId: "ski-slalom",
-    skills: ["balance", "core", "posture"],
-    actions: ["lean"],
-    benefits: ["active-play", "balance", "postural-control"],
+    id: "hand-snake",
+    productId: "balance-bridge",
+    skills: ["balance", "core", "coordination"],
+    actions: ["reach"],
+    benefits: ["active-play", "balance", "postural-control", "coordination"],
     title: "Balance Bridge",
-    tagline: "Control your weight shift and stay on the path",
-    needs: "full",
-    backdrop: "scene",
+    tagline: "Guide the path carefully with controlled reaches",
+    needs: "upper",
+    backdrop: "camera",
     accent: "#0f9b8e",
-    leanFor: "gates",
-    howTo: ["Lean gently towards the safe side", "Come back to centre under control"],
+    reachFor: "snake",
+    howTo: ["Move one hand smoothly to guide the path", "Make controlled reaches instead of sudden swings"],
     ready: true,
-    load: () => import("./ski-slalom.js"),
+    load: () => import("./hand-snake.js"),
   },
   {
-    id: "adventure-climber",
-    artId: "hand-tetris",
+    id: "hand-tetris",
+    productId: "adventure-climber",
     skills: ["coordination", "reach", "upper-body"],
     actions: ["reach", "raise"],
     benefits: ["active-play", "coordination", "upper-body", "mobility", "motor-planning"],
@@ -230,8 +230,8 @@ export const GAMES = [
     load: () => import("./hand-tetris.js"),
   },
   {
-    id: "simon-says-motion",
-    artId: "freeze-frame",
+    id: "freeze-frame",
+    productId: "simon-says-motion",
     skills: ["posture", "reaction", "core"],
     actions: ["hold"],
     benefits: ["active-play", "reaction", "postural-control", "motor-planning"],
@@ -247,4 +247,4 @@ export const GAMES = [
   },
 ];
 
-export const gameById = (id) => GAMES.find((g) => g.id === id) ?? null;
+export const gameById = (id) => GAMES.find((g) => g.id === id || g.productId === id) ?? null;
