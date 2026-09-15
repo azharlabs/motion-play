@@ -131,6 +131,8 @@ export function catalogEntry(cardId) {
 
 export function embedUrl(cardId) {
   const entry = catalogEntry(cardId);
+  // Vercel trailingSlash=false may strip the directory slash; embeds use
+  // root-absolute /external-games/... asset URLs so scripts still load.
   if (!entry) return "./external-games/lane-runner/";
   const params = new URLSearchParams(entry.params || {});
   const q = params.toString();

@@ -28,6 +28,9 @@ export function preferredConstraints() {
 }
 
 export async function startCamera(video) {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    throw new Error("Camera API not available in this browser");
+  }
   let stream;
   try {
     stream = await navigator.mediaDevices.getUserMedia(preferredConstraints());
@@ -35,6 +38,8 @@ export async function startCamera(video) {
     // Some cameras reject the aspect hint outright; any usable frame will do.
     if (err?.name === "OverconstrainedError") {
       stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
+    } else if (err?.name === "NotFoundError" || /Requested device not found/i.test(err?.message || "")) {
+      throw new Error("Requested device not found (no camera). Tap / keys still work.");
     } else {
       throw err;
     }

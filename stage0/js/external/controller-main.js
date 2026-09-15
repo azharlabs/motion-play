@@ -311,7 +311,12 @@ if (playMode && catalog) {
       );
       requestAnimationFrame(loop);
     } catch (error) {
-      setStatus(`Could not start: ${error?.message ?? error}`, "error");
+      const detail = error?.message ?? String(error);
+      // Soft fail: sticky embeds are already tappable/keyboard-playable without pose.
+      setStatus(
+        `Camera optional — ${detail}. Tap the game or use keys / Space to play anyway.`,
+        "error",
+      );
       if (btnStart) btnStart.disabled = false;
     }
   }
@@ -389,7 +394,9 @@ if (playMode && catalog) {
   });
 
   renderCounts();
+  setStatus("Game ready — tap / keys work now. Start enables optional camera controls.");
 
+  // Camera enhances controls when available; never gate the embed on it.
   if (catalog && params.get("autostart") !== "0") {
     setTimeout(() => {
       if (!running) start();
