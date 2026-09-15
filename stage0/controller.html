@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>MotionPlay External Game Controller</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-rounded, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #08111f; color: #f8fafc; }
+    main { width: min(1100px, 100%); margin: 0 auto; padding: 24px; }
+    .top { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: clamp(28px, 5vw, 48px); }
+    .sub { color: #cbd5e1; max-width: 760px; }
+    .panel { margin-top: 20px; padding: 18px; border-radius: 20px; background: #111c2d; border: 1px solid #26364d; }
+    .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    select, button { font: inherit; border-radius: 12px; border: 1px solid #3a4b63; padding: 12px 14px; }
+    select { background: #0b1524; color: #fff; }
+    button { background: #f97316; color: #111827; font-weight: 800; cursor: pointer; }
+    button:disabled { opacity: .45; cursor: default; }
+    #stop { background: #cbd5e1; }
+    .camera { position: relative; overflow: hidden; margin-top: 16px; border-radius: 18px; aspect-ratio: 4 / 3; background: #020617; }
+    video, canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    canvas { pointer-events: none; }
+    #status { margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: #0b1524; }
+    #status[data-mode="live"] { outline: 2px solid #22c55e; }
+    #status[data-mode="error"] { outline: 2px solid #ef4444; }
+    .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-top: 16px; }
+    .card { background: #0b1524; border: 1px solid #26364d; border-radius: 16px; padding: 16px; }
+    .card h2 { margin-top: 0; font-size: 18px; }
+    .count-row { padding: 6px 0; text-transform: capitalize; }
+    code { color: #fbbf24; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="top">
+      <div>
+        <h1>MotionPlay Controller</h1>
+        <p class="sub">Use MotionPlay as the motion engine while the real game runs in another browser tab. Open the game, arm that tab with the MotionPlay browser extension, then come back here and start tracking.</p>
+      </div>
+      <a href="./" style="color:#93c5fd">Back to MotionPlay</a>
+    </div>
+
+    <section class="panel">
+      <div class="controls">
+        <label for="profile">Game profile</label>
+        <select id="profile"></select>
+        <button id="start">Start motion control</button>
+        <button id="stop" disabled>Stop</button>
+      </div>
+      <div class="camera">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="overlay"></canvas>
+      </div>
+      <div id="status">Open an external game tab, click the MotionPlay extension icon on that tab to arm it, then start motion control.</div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Runner profile</h2>
+        <p>Lean left/right for lanes, real jump for jump, crouch for slide. Intended for Subway Surfers-style and endless-runner games.</p>
+      </article>
+      <article class="card">
+        <h2>Racer profile</h2>
+        <p>Lean to steer. MotionPlay holds acceleration automatically while you are visible. Works well with arrow-key racing games such as MIT-licensed <code>javascript-racer</code>.</p>
+      </article>
+      <article class="card">
+        <h2>Motion counts</h2>
+        <div id="counts"></div>
+      </article>
+    </section>
+  </main>
+  <script type="module" src="./js/external/controller-main.js"></script>
+</body>
+</html>

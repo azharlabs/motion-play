@@ -26,6 +26,24 @@ The current product catalogue contains 15 experiences built on the existing Stag
 
 The stable internal Stage 0 game IDs are temporarily retained so existing personal bests, activity history, artwork, tests and lazy-loaded engine modules remain compatible during the migration.
 
+## External game controller mode
+
+MotionPlay can also act only as the motion engine while an existing browser game supplies the visuals and gameplay.
+
+Open `stage0/controller.html`, choose a profile, calibrate the camera, and MotionPlay converts pose signals into a standard control stream. The companion Chrome/Edge extension in `companion/chrome-extension/` relays that stream into a game tab that the player explicitly arms.
+
+Current profiles:
+
+- Runner: lean left/right -> arrow left/right, physical jump -> up, crouch -> down.
+- Racer: lean -> steering, player in frame -> acceleration, crouch -> brake.
+- Platformer: lean -> movement, physical jump -> space, crouch -> down.
+
+This architecture exists because a normal web page cannot safely inject controls into an unrelated browser tab. The extension crosses that browser boundary while keeping MediaPipe and movement analytics inside MotionPlay.
+
+A reference racing target is `jakesgordon/javascript-racer`, an MIT-licensed browser racing game that already accepts arrow/WASD controls. The adapter is deliberately generic so other keyboard-driven runner and racing games can use the same MotionPlay motion engine without putting their game code into the core pose stack.
+
+Some games may reject synthetic keyboard events or run inside protected/sandboxed frames. Those will need the planned native virtual-gamepad companion rather than the browser relay.
+
 ## Motion and activity analytics
 
 Each game reports countable physical actions through the shared game interface. The current movement vocabulary includes:
