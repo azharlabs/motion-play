@@ -4,6 +4,9 @@ This Chrome/Edge extension lets the MotionPlay web pose engine control a separat
 
 ## Why it exists
 
+The primary sticky path embeds a same-origin Lane Runner iframe in `controller.html` and does **not** need this extension. Use the extension when you want MotionPlay to drive a *different* browser tab.
+
+
 A normal web page cannot safely send keyboard events into an unrelated browser tab. The relay extension bridges that browser boundary: MotionPlay detects the body movement, the extension forwards the resulting control state, and the armed game tab receives ordinary keyboard-style events.
 
 ## Install for development

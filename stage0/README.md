@@ -78,3 +78,7 @@ npm test
 - Average pose FPS from the rest screen after ~5 minutes
 - Whether jump/duck felt late
 - Heat and any throttling
+
+## Controller-first sticky title
+
+Default entry redirects to `controller.html`, which embeds `external-games/lane-runner/` (MotionPlay-built, arrow-key 3-lane runner) and drives it from pose via the runner profile. Open `index.html?legacy=1` for the older 15-game arcade.

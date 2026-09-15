@@ -26,11 +26,23 @@ The current product catalogue contains 15 experiences built on the existing Stag
 
 The stable internal Stage 0 game IDs are temporarily retained so existing personal bests, activity history, artwork, tests and lazy-loaded engine modules remain compatible during the migration.
 
+## Primary path: controller + Lane Runner
+
+The default Stage 0 entry (`stage0/index.html`) redirects to `stage0/controller.html`, which embeds the MotionPlay-built **Lane Runner** (`stage0/external-games/lane-runner/`) in a same-origin iframe. Pose tracking maps to the **runner** profile and injects arrow keys into the game via `postMessage` — no Chrome extension required on phone.
+
+Body mapping (runner profile):
+
+- Lean left/right → `ArrowLeft` / `ArrowRight` (lane change)
+- Physical jump → `ArrowUp`
+- Crouch → `ArrowDown` (slide)
+
+The original 15-game skill arcade remains available as **legacy** mode: open `/?legacy=1` (or `index.html?legacy=1`).
+
 ## External game controller mode
 
 MotionPlay can also act only as the motion engine while an existing browser game supplies the visuals and gameplay.
 
-Open `stage0/controller.html`, choose a profile, calibrate the camera, and MotionPlay converts pose signals into a standard control stream. The companion Chrome/Edge extension in `companion/chrome-extension/` relays that stream into a game tab that the player explicitly arms.
+Open `stage0/controller.html`, choose a profile, calibrate the camera, and MotionPlay converts pose signals into a standard control stream. Same-origin games (like the vendored Lane Runner) receive keys through the iframe bridge. The companion Chrome/Edge extension in `companion/chrome-extension/` remains a secondary path that relays the same stream into another tab the player explicitly arms.
 
 Current profiles:
 
@@ -38,7 +50,7 @@ Current profiles:
 - Racer: lean -> steering, player in frame -> acceleration, crouch -> brake.
 - Platformer: lean -> movement, physical jump -> space, crouch -> down.
 
-This architecture exists because a normal web page cannot safely inject controls into an unrelated browser tab. The extension crosses that browser boundary while keeping MediaPipe and movement analytics inside MotionPlay.
+A normal web page cannot safely inject controls into an unrelated browser tab; the extension crosses that boundary. Same-origin iframes do not need it.
 
 A reference racing target is `jakesgordon/javascript-racer`, an MIT-licensed browser racing game that already accepts arrow/WASD controls. The adapter is deliberately generic so other keyboard-driven runner and racing games can use the same MotionPlay motion engine without putting their game code into the core pose stack.
 
