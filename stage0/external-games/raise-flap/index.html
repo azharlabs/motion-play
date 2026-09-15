@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1" />
+  <title>MotionPlay — Space Defender</title>
+  <link rel="stylesheet" href="../_shared/shell.css" />
+  <style>:root { --accent: #14b8a6; }</style>
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="game" aria-label="Space Defender"></canvas>
+    <div id="chrome">
+      <div class="pill">Score <span id="score">0</span></div>
+      <div id="status">Waiting for MotionPlay…</div>
+      <div class="pill">Best <span id="best">0</span></div>
+    </div>
+    <div id="overlay">
+      <div id="overlay-card">
+        <h1 id="overlay-title">Space Defender</h1>
+        <p id="overlay-body">Loading…</p>
+      </div>
+    </div>
+  </div>
+  <script src="../_shared/key-bridge.js"></script>
+  <script src="../_shared/mini.js"></script>
+  <script src="./game.js"></script>
+</body>
+</html>

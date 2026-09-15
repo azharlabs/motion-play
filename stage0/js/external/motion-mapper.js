@@ -2,6 +2,24 @@ import { profileById } from "./profiles.js";
 
 const changed = (a, b) => a !== b;
 
+function handSnapshot(hand) {
+  if (!hand) return { visible: false };
+  return {
+    visible: Boolean(hand.visible),
+    x: hand.x ?? null,
+    y: hand.y ?? null,
+    z: hand.z ?? null,
+  };
+}
+
+function raiseFromHands(signals = {}) {
+  const hands = [signals.hands?.left, signals.hands?.right].filter((h) => h?.visible && h.y != null);
+  if (!hands.length) return null;
+  const avgY = hands.reduce((s, h) => s + h.y, 0) / hands.length;
+  // MediaPipe y grows downward; high hands => low y => high raise 0..1
+  return Math.max(0, Math.min(1, 1 - avgY));
+}
+
 export class ExternalMotionMapper {
   constructor(profile = "runner", opts = {}) {
     this.profile = profileById(profile);
@@ -40,8 +58,8 @@ export class ExternalMotionMapper {
       this.side = 0;
     }
 
-    next[this.profile.keys.left] = this.side < 0;
-    next[this.profile.keys.right] = this.side > 0;
+    if (this.profile.keys.left) next[this.profile.keys.left] = this.side < 0;
+    if (this.profile.keys.right) next[this.profile.keys.right] = this.side > 0;
 
     const jumping = Boolean(signals.jump);
     if (this.profile.keys.jump) {
@@ -62,6 +80,13 @@ export class ExternalMotionMapper {
       next[this.profile.keys.accelerate] = Boolean(signals.inFrame);
     }
 
+    // Raise profile: map arm height to up/down keys continuously via thresholds
+    const raise = raiseFromHands(signals);
+    if (this.profile.id === "raise" && raise != null) {
+      next.ArrowUp = raise > 0.62;
+      next.ArrowDown = raise < 0.38;
+    }
+
     const events = [];
     const all = new Set([...Object.keys(this.controls), ...Object.keys(next)]);
     for (const key of all) {
@@ -71,7 +96,20 @@ export class ExternalMotionMapper {
     }
     this.controls = next;
 
-    return { events, controls: { ...next }, actions: { ...this.actions } };
+    const pose = {
+      inFrame: Boolean(signals.inFrame),
+      lean,
+      jump: jumping,
+      ducking,
+      crouch: Number(signals.crouch ?? 0),
+      raise: raise ?? 0.5,
+      hands: {
+        left: handSnapshot(signals.hands?.left),
+        right: handSnapshot(signals.hands?.right),
+      },
+    };
+
+    return { events, controls: { ...next }, actions: { ...this.actions }, pose };
   }
 
   releaseAll() {

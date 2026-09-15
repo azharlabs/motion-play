@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1" />
-  <title>MotionPlay — Lane Runner</title>
+  <title>MotionPlay — Play</title>
   <style>
     :root { color-scheme: dark; font-family: Inter, ui-rounded, system-ui, sans-serif; }
     * { box-sizing: border-box; }
@@ -18,7 +18,7 @@
       flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid #1f2a3d;
       background: #0b1524;
     }
-    header h1 { margin: 0; font-size: clamp(18px, 4vw, 24px); }
+    header h1 { margin: 0; font-size: clamp(16px, 3.6vw, 22px); }
     header .links { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
     header a { color: #93c5fd; font-size: 13px; }
     .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -62,7 +62,7 @@
   <div id="app">
     <header>
       <div>
-        <h1>MotionPlay Runner</h1>
+        <h1 id="game-title">MotionPlay</h1>
       </div>
       <div class="controls">
         <label for="profile" class="sr-only" style="position:absolute;left:-9999px">Profile</label>
@@ -71,9 +71,9 @@
         <button id="stop" type="button" disabled>Stop</button>
       </div>
       <div class="links">
-        <a href="./">Skill grid</a>
+        <a id="back-home" href="./">Skill grid</a>
         <a href="./index.html?legacy=1">Legacy arcade</a>
-        <a href="https://github.com/azharlabs/motion-play" target="_blank" rel="noopener">GitHub</a>
+        <a href="./controller.html">Controller</a>
       </div>
     </header>
 
@@ -84,18 +84,18 @@
           <canvas id="overlay" class="overlay"></canvas>
         </div>
       </section>
-      <section id="game-pane" aria-label="Lane runner">
+      <section id="game-pane" aria-label="Sticky mini-game">
         <iframe
           id="game-frame"
-          title="MotionPlay Lane Runner"
+          title="MotionPlay game"
           src="./external-games/lane-runner/"
           allow="fullscreen"
         ></iframe>
       </section>
     </div>
 
-    <div id="status">Press Start, step back so your full body is visible, then lean / jump / duck to play.</div>
-    <div class="fine">Primary path: same-origin iframe + key injection (no extension required). Chrome extension remains optional for other tabs.</div>
+    <div id="status">Press Start, step back so your body is visible, then move to play.</div>
+    <div class="fine">Same-origin iframe + key/pose bridge (no extension required). Camera stays on-device.</div>
     <div id="counts" aria-hidden="true"></div>
   </div>
   <script type="module" src="./js/external/controller-main.js"></script>

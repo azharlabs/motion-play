@@ -3,6 +3,9 @@
  * Arrow keys: left/right lanes, up jump, down slide.
  */
 (() => {
+  const cfg = (window.MPMini && MPMini.readConfig()) || {};
+  const gameTitle = cfg.title || "Lane Runner";
+  const accent = cfg.accent || "#f97316";
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
   const hudScore = document.getElementById("score");
@@ -11,6 +14,8 @@
   const overlay = document.getElementById("overlay");
   const overlayTitle = document.getElementById("overlay-title");
   const overlayBody = document.getElementById("overlay-body");
+  if (overlayTitle) overlayTitle.textContent = gameTitle;
+  document.title = "MotionPlay — " + gameTitle;
 
   const LANES = 3;
   const STORAGE_KEY = "motionplay.lane-runner.best";
@@ -475,7 +480,7 @@
     ctx.fill();
 
     // Body
-    ctx.fillStyle = "#f97316";
+    ctx.fillStyle = accent;
     roundRect(x - bodyW / 2, y - bodyH, bodyW, bodyH, 10 * s);
     ctx.fill();
 
@@ -541,7 +546,7 @@
   hudBest.textContent = String(BEST);
   setOverlay(
     true,
-    "Lane Runner",
+    gameTitle,
     "Body lean changes lanes · jump clears low barriers · duck slides under high bars. Tap or Space to start.",
   );
   resize();
