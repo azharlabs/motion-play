@@ -601,3 +601,69 @@ canvas.overlay { pointer-events: none; }
     max-height: 56vh;
   }
 }
+
+/* Soft Pause / Exit sheet (replaces hard Stop→home) */
+#session-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(6, 22, 20, 0.62);
+  backdrop-filter: blur(4px);
+}
+#session-sheet[hidden] { display: none !important; }
+.session-sheet-card {
+  width: min(380px, 100%);
+  border-radius: 24px;
+  padding: 22px 20px 18px;
+  background: #fffdf8;
+  color: #1f2937;
+  border: 2px solid #f5d9b0;
+  box-shadow: 0 14px 32px rgba(31, 41, 55, 0.28);
+  text-align: center;
+}
+.session-sheet-eyebrow {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+.session-sheet-card h2 {
+  margin: 0 0 8px;
+  font-size: clamp(26px, 5vw, 34px);
+  color: var(--teal);
+  letter-spacing: -0.4px;
+}
+.session-sheet-body {
+  margin: 0 0 18px;
+  color: #5b6472;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.session-sheet-actions {
+  display: grid;
+  gap: 10px;
+}
+.session-sheet-actions .primary {
+  width: 100%;
+}
+.session-exit {
+  appearance: none;
+  border: 2px solid #d1d5db;
+  border-radius: 14px;
+  padding: 12px 18px;
+  min-height: 48px;
+  background: #fff;
+  color: #374151;
+  font: inherit;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+}
+.session-exit:active {
+  transform: translateY(1px);
+}

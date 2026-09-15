@@ -2,6 +2,7 @@
 
 - `shell.css` — chrome + overlay tokens
 - `mini.js` — HUD / canvas / pose listener helpers
+- `delight.js` — Pip reactions, goal HUD, combo floats, soft SFX, confetti win
 - `key-bridge.js` — parent → keyboard event bridge
 
 **Asset URLs:** each game `index.html` loads these with **root-absolute** paths

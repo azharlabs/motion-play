@@ -19,7 +19,7 @@
       </div>
       <div class="controls">
         <button id="start" type="button">Start</button>
-        <button id="stop" type="button" disabled>Stop</button>
+        <button id="stop" type="button" disabled>Pause</button>
       </div>
       <div class="links">
         <a id="back-home" href="./controller.html">All games</a>
@@ -41,6 +41,19 @@
           allow="fullscreen"
         ></iframe>
       </section>
+    </div>
+
+
+    <div id="session-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="session-sheet-title">
+      <div class="session-sheet-card">
+        <p class="session-sheet-eyebrow">Paused</p>
+        <h2 id="session-sheet-title">Take a breather</h2>
+        <p class="session-sheet-body">Continue playing, or Exit back to all games.</p>
+        <div class="session-sheet-actions">
+          <button type="button" id="session-continue" class="primary">Continue</button>
+          <button type="button" id="session-exit" class="session-exit">Exit</button>
+        </div>
+      </div>
     </div>
 
     <div id="status">Game ready — tap / keys work without camera. Start enables optional body controls.</div>
