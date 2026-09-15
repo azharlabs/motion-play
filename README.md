@@ -26,9 +26,9 @@ The current product catalogue contains 15 experiences built on the existing Stag
 
 The stable internal Stage 0 game IDs are temporarily retained so existing personal bests, activity history, artwork, tests and lazy-loaded engine modules remain compatible during the migration.
 
-## Primary path: skill grid → howto → sticky embeds
+## Primary path: controller → preview → sticky embeds
 
-The default Stage 0 entry is `stage0/index.html`: **mascot + logo, skill card grid, howto with GIF/canvas preview, then Play**. Play opens `play.html?card=<id>`, which embeds a MotionPlay-built mini-game under `stage0/external-games/` and drives it with pose → key/pose bridge (same-origin iframe, no extension required on phone). No profile dropdown on that path.
+The default Stage 0 entry (`/`) redirects to `stage0/controller.html`: **mascot + logo, title list of 15 sticky games, GIF/canvas howto preview, then Play**. Play opens the same controller shell with `?card=<id>` (or `play.html?card=<id>`), embedding a MotionPlay mini-game under `stage0/external-games/` driven by pose → key/pose bridge (same-origin iframe). No profile dropdown and no legacy arcade links on the primary UI.
 
 Action families covered by dedicated embeds (remaining cards reuse the closest family with a distinct skin/title):
 
@@ -40,15 +40,15 @@ Action families covered by dedicated embeds (remaining cards reuse the closest f
 - Raise: `raise-flap`
 - Squat / lean platformer: `squat-island`
 
-Legacy Stage 0 canvas arcade engines are **not** listed on the skill grid. They remain available only behind an explicit deep link: `/?legacy=1` (or `index.html?legacy=1`). `controller.html` stays as an optional advanced library (profile picker), not the default home.
+Legacy Stage 0 canvas arcade engines are fully hidden from primary navigation. They remain available only as an emergency deep link: `/?legacy=1` (or `index.html?legacy=1`) — not surfaced in the controller UI.
 
-Play chrome (`play.html` / `controller.html`) and embed shells share MotionPlay CSS tokens (teal / orange, Nunito, cards, buttons) via `css/play-chrome.css` and `external-games/_shared/shell.css`.
+Play chrome (`controller.html` / `play.html`) and embed shells share MotionPlay CSS tokens (teal / orange, Nunito, cards, buttons) via `css/play-chrome.css` and `external-games/_shared/shell.css`.
 
 ## External game controller mode
 
 MotionPlay can also act only as the motion engine while an existing browser game supplies the visuals and gameplay.
 
-Open `stage0/controller.html`, pick a sticky title (or pass `?card=`), calibrate the camera, and MotionPlay converts pose signals into a standard control stream. Same-origin games receive keys through the iframe bridge. The companion Chrome/Edge extension in `companion/chrome-extension/` remains a secondary path that relays the same stream into another tab the player explicitly arms.
+From the primary controller hub, pick a sticky title (preview first, or pass `?card=` to skip to play), calibrate the camera, and MotionPlay converts pose signals into a standard control stream. Same-origin games receive keys through the iframe bridge. The companion Chrome/Edge extension in `companion/chrome-extension/` remains a secondary path that relays the same stream into another tab the player explicitly arms.
 
 Current profiles:
 

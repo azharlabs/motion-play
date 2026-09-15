@@ -3,37 +3,122 @@ import { createPoseTracker } from "../pose.js";
 import { MotionSignals, leadHands } from "../signals.js";
 import { ExternalMotionMapper } from "./motion-mapper.js";
 import { ExternalGameBridge } from "./bridge.js";
-import { CONTROL_PROFILES } from "./profiles.js";
 import { EMBED_CATALOG, catalogEntry, embedUrl, CATALOG_CARD_IDS } from "./catalog.js";
 import { gameById } from "../games/registry.js";
+import { drawMascotBadge } from "../mascot.js";
+import { drawHowTo, currentClip, clipsFor, clipCue } from "../demo.js";
 
 const el = (id) => document.getElementById(id);
 const library = el("library");
+const preview = el("preview");
 const playShell = el("play-shell");
 const titleGrid = el("title-grid");
+const logo = el("logo-mascot");
+const howtoCanvas = el("howto-canvas");
 const video = el("video");
 const overlay = el("overlay");
 const status = el("status");
 const counts = el("counts");
-const profileSelect = el("profile");
+const profileSelect = el("profile"); // may be absent — profile UI removed
 const btnStart = el("start");
 const btnStop = el("stop");
 const gameFrame = el("game-frame");
 const titleEl = el("game-title");
+const btnPreviewBack = el("btn-preview-back");
+const btnPreviewPlay = el("btn-preview-play");
 
 const params = new URLSearchParams(location.search);
 const cardId = params.get("card") || params.get("game") || "";
+const previewId = params.get("preview") || "";
 const catalog = cardId ? catalogEntry(cardId) : null;
 
-function showLibrary() {
-  if (library) library.hidden = false;
+let previewMeta = null;
+let previewShownStep = -1;
+let rafId = 0;
+
+function hideAll() {
+  if (library) library.hidden = true;
+  if (preview) preview.hidden = true;
   if (playShell) playShell.hidden = true;
+}
+
+function showLibrary() {
+  hideAll();
+  if (library) library.hidden = false;
   document.title = "MotionPlay — Play";
   document.body.style.background = "";
+  previewMeta = null;
+}
+
+function showPreview(id) {
+  const entry = catalogEntry(id);
+  const meta = gameById(id);
+  if (!entry || !meta) return;
+  hideAll();
+  if (preview) preview.hidden = false;
+  document.body.style.background = "";
+  document.title = `MotionPlay — ${entry.title}`;
+  previewMeta = meta;
+  previewShownStep = -1;
+
+  const title = el("preview-title");
+  const tagline = el("preview-tagline");
+  const badge = el("preview-badge");
+  const framing = el("preview-framing");
+  const steps = el("preview-steps");
+  const rules = el("preview-rules");
+
+  if (title) title.textContent = entry.title;
+  if (tagline) tagline.textContent = entry.hint || meta.tagline || "";
+  if (badge) {
+    badge.className = `card-badge ${entry.needs === "upper" ? "upper" : "full"}`;
+    badge.textContent = entry.needs === "upper" ? "Upper body" : "Full body";
+  }
+  if (framing) {
+    framing.textContent =
+      entry.needs === "upper"
+        ? "Sit or stand close, with your head and both arms in the picture."
+        : "Stand back until your whole body fits in the picture, head to feet.";
+  }
+  if (steps) {
+    steps.replaceChildren(
+      ...clipsFor(meta).map((clipId) => {
+        const li = document.createElement("li");
+        li.textContent = clipCue(clipId);
+        return li;
+      }),
+    );
+  }
+  if (rules) {
+    const howTo = meta.howTo || [];
+    rules.replaceChildren(
+      ...howTo.map((line) => {
+        const li = document.createElement("li");
+        li.textContent = line;
+        return li;
+      }),
+    );
+  }
+
+  // Deep-linkable preview without entering play yet.
+  const url = new URL(location.href);
+  url.searchParams.delete("card");
+  url.searchParams.delete("game");
+  url.searchParams.set("preview", id);
+  history.replaceState(null, "", url.pathname + "?" + url.searchParams.toString() + url.hash);
+
+  if (btnPreviewPlay) {
+    btnPreviewPlay.onclick = () => {
+      const playUrl = new URL(location.href);
+      playUrl.searchParams.delete("preview");
+      playUrl.searchParams.set("card", id);
+      location.assign(playUrl.pathname + "?" + playUrl.searchParams.toString() + playUrl.hash);
+    };
+  }
 }
 
 function showPlayShell() {
-  if (library) library.hidden = true;
+  hideAll();
   if (playShell) playShell.hidden = false;
   document.body.style.background = "#0d2a26";
 }
@@ -68,40 +153,80 @@ function paintLibrary() {
     badge.textContent = entry.needs === "upper" ? "Upper body" : "Full body";
 
     btn.append(swatch, name, hint, badge);
-    btn.addEventListener("click", () => {
-      // Stay on the controller shell; deep-linkable via ?card=
-      const url = new URL(location.href);
-      url.searchParams.set("card", id);
-      location.assign(url.pathname + "?" + url.searchParams.toString() + url.hash);
-    });
+    btn.addEventListener("click", () => showPreview(id));
     li.append(btn);
     titleGrid.append(li);
   }
 }
 
-/* ---- library-only page path (no play chrome on this document) ---- */
-if (titleGrid && !catalog) {
+function drawHowToFrame(now) {
+  if (!howtoCanvas || !previewMeta || preview?.hidden) return;
+  const w = howtoCanvas.clientWidth;
+  const h = howtoCanvas.clientHeight;
+  if (!w || !h) return;
+
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const pw = Math.round(w * dpr);
+  const ph = Math.round(h * dpr);
+  if (howtoCanvas.width !== pw || howtoCanvas.height !== ph) {
+    howtoCanvas.width = pw;
+    howtoCanvas.height = ph;
+  }
+
+  const ctx = howtoCanvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawHowTo(ctx, { w, h }, previewMeta, now);
+
+  const { index } = currentClip(previewMeta, now);
+  if (index === previewShownStep) return;
+  previewShownStep = index;
+  const items = el("preview-steps")?.children;
+  if (!items) return;
+  for (let i = 0; i < items.length; i += 1) items[i].classList.toggle("showing", i === index);
+}
+
+function chromeLoop(now) {
+  rafId = requestAnimationFrame(chromeLoop);
+  if (library && !library.hidden && logo) {
+    const ctx = logo.getContext("2d");
+    ctx.clearRect(0, 0, logo.width, logo.height);
+    drawMascotBadge(ctx, 60, 60, 110, now);
+  }
+  if (preview && !preview.hidden && previewMeta) {
+    drawHowToFrame(now);
+  }
+}
+
+/* ---- library / preview path (no ?card=) ---- */
+if (!catalog) {
   paintLibrary();
-  showLibrary();
+  if (previewId && catalogEntry(previewId)) {
+    showPreview(previewId);
+  } else {
+    showLibrary();
+  }
+  btnPreviewBack?.addEventListener("click", () => {
+    const url = new URL(location.href);
+    url.searchParams.delete("preview");
+    history.replaceState(null, "", url.pathname + (url.searchParams.toString() ? "?" + url.searchParams.toString() : "") + url.hash);
+    showLibrary();
+  });
+  requestAnimationFrame(chromeLoop);
 }
 
 /* ---- play session ---- */
 const playMode = Boolean(playShell && (catalog || !library));
 
-if (playMode) {
+if (playMode && catalog) {
   showPlayShell();
 
   const defaultProfile = catalog?.profile || params.get("profile") || "runner";
   const signalMode = catalog?.needs === "upper" ? "upper" : "full";
 
+  // Profile dropdown removed from primary UI; still honor catalog / ?profile= under the hood.
   if (profileSelect) {
-    for (const profile of Object.values(CONTROL_PROFILES)) {
-      const option = document.createElement("option");
-      option.value = profile.id;
-      option.textContent = profile.label;
-      profileSelect.append(option);
-    }
-    profileSelect.value = defaultProfile in CONTROL_PROFILES ? defaultProfile : "runner";
+    profileSelect.hidden = true;
+    profileSelect.setAttribute("aria-hidden", "true");
   }
 
   if (catalog) {
@@ -174,7 +299,7 @@ if (playMode) {
       tracker = await createPoseTracker();
       signals = new MotionSignals({ mode: signalMode });
       signals.startCalibration(performance.now());
-      mapper = new ExternalMotionMapper(profileSelect?.value || defaultProfile);
+      mapper = new ExternalMotionMapper(defaultProfile);
       ensureBridge();
       running = true;
       if (btnStop) btnStop.disabled = false;
@@ -254,12 +379,6 @@ if (playMode) {
 
   btnStart?.addEventListener("click", start);
   btnStop?.addEventListener("click", stop);
-  profileSelect?.addEventListener("change", () => {
-    if (!running) return;
-    ensureBridge().release(mapper?.releaseAll() ?? [], { profile: mapper?.profile?.id });
-    mapper = new ExternalMotionMapper(profileSelect.value);
-    renderCounts();
-  });
 
   gameFrame?.addEventListener("load", () => {
     if (bridge) bridge.setTargets(controlTargets());
@@ -276,4 +395,7 @@ if (playMode) {
       if (!running) start();
     }, 250);
   }
+} else if (playMode && !catalog && !library) {
+  // play.html without ?card= — still show shell with default embed
+  showPlayShell();
 }
