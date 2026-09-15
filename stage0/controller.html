@@ -14,43 +14,71 @@
   <link rel="stylesheet" href="./css/play-chrome.css" />
 </head>
 <body>
-  <!-- Optional advanced hub: 15 sticky titles -->
+  <!-- Primary hub: 15 sticky titles -->
   <section id="library">
     <header class="mp-head">
-      <div class="mp-mark" aria-hidden="true">M</div>
+      <canvas id="logo-mascot" width="120" height="120" aria-hidden="true"></canvas>
       <div class="mp-brand">
         <h1>Motion<span>Play</span></h1>
         <p>Fifteen camera games. Your body is the controller.</p>
       </div>
       <div class="mp-links">
-        <a href="./">Skill grid</a>
-        <a href="./index.html?legacy=1">Legacy arcade</a>
         <a href="https://github.com/azharlabs/motion-play" target="_blank" rel="noopener">GitHub</a>
       </div>
     </header>
 
-    <h2 class="section-head">Advanced controller</h2>
-    <p class="section-sub">Optional library of sticky mini-games with profile picker. The main home is the skill grid.</p>
+    <h2 class="section-head">Pick a motion game</h2>
+    <p class="section-sub">Choose a title, preview how to move, then Play — sticky mini-games driven by your camera.</p>
     <ul class="title-grid" id="title-grid"></ul>
 
     <p class="fineprint">© 2026 Azharlabs. Camera stays on-device.</p>
   </section>
 
-  <!-- Play session (shown when a title is selected) -->
+  <!-- Preview / howto (after picking a title) -->
+  <section id="preview" class="preview-screen" hidden>
+    <header class="mp-head">
+      <button type="button" id="btn-preview-back" class="icon-btn" aria-label="Back to all games">
+        <span aria-hidden="true">←</span>
+      </button>
+      <div class="mp-brand">
+        <h1 id="preview-title">How to play</h1>
+        <p id="preview-tagline"></p>
+      </div>
+    </header>
+
+    <div class="howto-body">
+      <figure class="howto-demo">
+        <canvas id="howto-canvas"></canvas>
+        <figcaption>
+          <span class="card-badge" id="preview-badge">Full body</span>
+          <span id="preview-framing"></span>
+        </figcaption>
+      </figure>
+
+      <h2 class="section-head">Move like this</h2>
+      <ol class="howto-steps" id="preview-steps"></ol>
+
+      <h2 class="section-head">In the game</h2>
+      <ul class="tips" id="preview-rules"></ul>
+    </div>
+
+    <div class="howto-actions">
+      <button type="button" id="btn-preview-play" class="primary wide">Play</button>
+    </div>
+  </section>
+
+  <!-- Play session (shown when Play is pressed / ?card=) -->
   <div id="play-shell" hidden>
     <header class="play-head">
       <div>
         <h1 id="game-title">Motion<span>Play</span></h1>
       </div>
       <div class="controls">
-        <label for="profile" class="sr-only">Profile</label>
-        <select id="profile" title="Control profile"></select>
         <button id="start" type="button">Start</button>
         <button id="stop" type="button" disabled>Stop</button>
       </div>
       <div class="links">
-        <a id="back-library" href="./">Skill grid</a>
-        <a href="./index.html?legacy=1">Legacy arcade</a>
+        <a id="back-library" href="./controller.html">All games</a>
       </div>
     </header>
 

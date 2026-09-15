@@ -367,3 +367,174 @@ canvas.overlay { pointer-events: none; }
   position: absolute;
   left: -9999px;
 }
+
+/* ---------- logo mascot (controller home) ---------- */
+
+#logo-mascot {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+}
+
+.icon-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 2px solid var(--edge);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  box-shadow: var(--shadow);
+}
+.icon-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 4px 10px rgba(31, 41, 55, 0.1);
+}
+
+/* ---------- preview / howto ---------- */
+
+#preview[hidden] { display: none !important; }
+
+.preview-screen {
+  min-height: 100%;
+  padding: calc(var(--safe-t) + 18px) calc(var(--safe-r) + 16px)
+    calc(var(--safe-b) + 24px) calc(var(--safe-l) + 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.howto-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 auto;
+}
+
+.howto-demo {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.howto-demo canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 6 / 5;
+  max-height: 42vh;
+  border-radius: 18px;
+}
+
+.howto-demo figcaption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  line-height: 1.35;
+}
+
+.card-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--teal) 16%, #fff);
+  color: var(--teal-dark);
+  flex: 0 0 auto;
+}
+.card-badge.full {
+  background: color-mix(in srgb, var(--orange) 18%, #fff);
+  color: #c2410c;
+}
+.card-badge.upper {
+  background: color-mix(in srgb, var(--teal) 16%, #fff);
+  color: var(--teal-dark);
+}
+
+.howto-steps {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.howto-steps li.showing {
+  color: var(--teal-dark);
+}
+.howto-steps li.showing::marker {
+  color: var(--teal);
+}
+
+.tips {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.howto-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0 4px;
+  background: linear-gradient(180deg, rgba(253, 246, 233, 0) 0%, var(--paper) 30%);
+}
+
+.primary {
+  appearance: none;
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  min-height: 48px;
+  background: var(--orange);
+  color: #111827;
+  font: inherit;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #c2410c;
+}
+.primary:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #c2410c;
+}
+.primary.wide { width: 100%; }
+
+@media (min-width: 620px) {
+  .howto-body {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    grid-template-rows: auto auto auto auto 1fr;
+    column-gap: 18px;
+    align-items: start;
+  }
+  .howto-demo {
+    grid-row: 1 / span 5;
+  }
+  .howto-demo canvas {
+    max-height: 56vh;
+  }
+}

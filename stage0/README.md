@@ -1,12 +1,10 @@
 # Stage 0
 
-**Primary path:** `index.html` skill grid (mascot, howto GIF/canvas, Play) → `play.html?card=<id>` sticky embeds. Default `/` stays on the skill grid.
+**Primary path:** `/` → `controller.html` (mascot + logo, 15 sticky titles, howto GIF/canvas preview, Play) → `?card=<id>` sticky embed session. No profile dropdown.
 
-**Legacy arcade** (original Stage 0 canvas engines under `js/games/`): `index.html?legacy=1` only — not listed on the skill grid.
+**Legacy arcade** (original Stage 0 canvas engines under `js/games/`): `index.html?legacy=1` only — not linked from the primary UI.
 
-**Optional advanced:** `controller.html` library with profile picker. Same embeds; not the default home.
-
-**Play session:** `play.html?card=<id>` — camera + iframe chrome themed with MotionPlay tokens (`css/play-chrome.css`). No profile dropdown on the skill-grid play path.
+**Play session:** `controller.html?card=<id>` or `play.html?card=<id>` — camera + iframe chrome themed with MotionPlay tokens (`css/play-chrome.css`).
 
 # MotionPlay Stage 0 — Jump the Wall
 
@@ -28,7 +26,7 @@ Open [http://localhost:5173](http://localhost:5173) and allow the camera.
 
 ## Play
 
-1. Open the skill grid, pick a skill/game, and read the how-to (GIF/canvas preview).
+1. Open the controller home, pick a title, and read the how-to (GIF/canvas preview).
 2. Press **Play**, then **Start** on the play chrome — stand so your body is in frame.
 3. Move according to the title’s hint (lean, jump, reach, punch, hold, …).
 
