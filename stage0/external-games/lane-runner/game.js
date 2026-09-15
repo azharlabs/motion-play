@@ -42,8 +42,13 @@
     last: 0,
   };
 
-  if (bindParentStop) bindParentStop(state, () => {
-    setOverlay(true, "Paused", "Stopped from MotionPlay · tap or Space to continue");
+  if (bindParentStop) bindParentStop(state, (payload) => {
+    if (payload?.action === "resume") {
+      setOverlay(false);
+      hudStatus.textContent = "Lean · Jump · Duck";
+      return;
+    }
+    setOverlay(true, "Paused", "Paused · Continue from MotionPlay, or tap / Space here");
     hudStatus.textContent = "Paused";
   });
 

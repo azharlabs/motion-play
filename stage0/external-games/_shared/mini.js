@@ -129,14 +129,29 @@
   }
 
   /**
-   * Freeze a sticky embed when the parent sends stop/pause.
+   * Freeze / resume a sticky embed on parent stop|pause|resume.
+   * Soft Pause sheet uses pause+resume; Exit uses stop then navigates home.
    * @param {{ mode: string }} state  game state with a `mode` field ("play" | …)
-   * @param {object|function} hudOrFn  HUD from createHud, or a custom pause callback
-   * @param {{ title?: string, body?: string }} [messages]
+   * @param {object|function} hudOrFn  HUD from createHud, or a custom control callback
+   * @param {{ title?: string, body?: string, resumeStatus?: string }} [messages]
    */
   function bindParentStop(state, hudOrFn, messages = {}) {
     installControlListener((payload) => {
-      if (payload.action !== "stop" && payload.action !== "pause") return;
+      const action = payload?.action;
+      if (action === "resume") {
+        if (state.mode !== "pause") return;
+        state.mode = "play";
+        if (typeof hudOrFn === "function") {
+          hudOrFn(payload);
+          return;
+        }
+        setOverlay(hudOrFn, false);
+        if (hudOrFn?.status) {
+          hudOrFn.status.textContent = messages.resumeStatus || "Go!";
+        }
+        return;
+      }
+      if (action !== "stop" && action !== "pause") return;
       if (state.mode !== "play") return;
       state.mode = "pause";
       if (typeof hudOrFn === "function") {
@@ -145,7 +160,7 @@
       }
       const title = messages.title || "Paused";
       const body =
-        messages.body || "Stopped from MotionPlay · tap or Space to continue";
+        messages.body || "Paused · Continue from MotionPlay, or tap / Space here";
       setOverlay(hudOrFn, true, title, body);
       if (hudOrFn?.status) hudOrFn.status.textContent = "Paused";
     });

@@ -23,7 +23,10 @@ const status = el("status");
 const counts = el("counts");
 const profileSelect = el("profile"); // may be absent — profile UI removed
 const btnStart = el("start");
-const btnStop = el("stop");
+const btnStop = el("stop"); // labeled Pause — opens soft Pause/Exit sheet
+const sessionSheet = el("session-sheet");
+const btnSessionContinue = el("session-continue");
+const btnSessionExit = el("session-exit");
 const gameFrame = el("game-frame");
 const titleEl = el("game-title");
 const btnPreviewBack = el("btn-preview-back");
@@ -40,6 +43,53 @@ let rafId = 0;
 
 /** Play-session stop hook (set when play mode boots). */
 let stopPlaySession = null;
+/** Soft pause / resume hooks for the Pause/Exit sheet. */
+let pausePlaySession = null;
+let resumePlaySession = null;
+let sessionSheetOpen = false;
+
+function showSessionSheet() {
+  if (!sessionSheet) return;
+  sessionSheet.hidden = false;
+  sessionSheetOpen = true;
+  queueMicrotask(() => btnSessionContinue?.focus({ preventScroll: true }));
+}
+
+function hideSessionSheet() {
+  if (!sessionSheet) return;
+  sessionSheet.hidden = true;
+  sessionSheetOpen = false;
+}
+
+function openPauseSheet(event) {
+  event?.preventDefault?.();
+  if (typeof pausePlaySession === "function") {
+    try {
+      pausePlaySession();
+    } catch {
+      /* ignore */
+    }
+  }
+  showSessionSheet();
+}
+
+function continueFromSheet(event) {
+  event?.preventDefault?.();
+  hideSessionSheet();
+  if (typeof resumePlaySession === "function") {
+    try {
+      resumePlaySession();
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+function exitFromSheet(event) {
+  event?.preventDefault?.();
+  hideSessionSheet();
+  goHome(event);
+}
 
 function hideAll() {
   if (library) library.hidden = true;
@@ -220,6 +270,7 @@ function chromeLoop(now) {
 }
 
 function goHome(event) {
+  hideSessionSheet();
   // Always clear play session (camera / keys / embed) before leaving play.
   if (typeof stopPlaySession === "function") {
     try {
@@ -258,6 +309,8 @@ function wireHomeLinks() {
   for (const node of document.querySelectorAll(".mp-home, #back-library, #back-home")) {
     node.addEventListener("click", goHome);
   }
+  btnSessionContinue?.addEventListener("click", continueFromSheet);
+  btnSessionExit?.addEventListener("click", exitFromSheet);
 }
 
 /* ---- library / preview path (no ?card=) ---- */
@@ -387,17 +440,48 @@ if (playMode && catalog) {
         "error",
       );
       if (btnStart) btnStart.disabled = false;
-      // Still allow Stop so kids can exit back to the library.
+      // Still allow Pause sheet so kids can Exit back to the library.
       if (btnStop) btnStop.disabled = false;
     }
   }
 
+  let inputPaused = false;
+
+  /**
+   * Soft pause: freeze input + embed, keep camera/iframe for Continue.
+   */
+  function pauseSession() {
+    inputPaused = true;
+    const released = mapper?.releaseAll?.() ?? [];
+    const profileId = mapper?.profile?.id || defaultProfile;
+    const b = ensureBridge();
+    if (released.length) b.release(released, { profile: profileId, card: cardId || undefined });
+    b.control("pause", { profile: profileId, card: cardId || undefined });
+    setStatus("Paused — Continue or Exit", "paused");
+  }
+
+  /** Resume after soft Pause sheet Continue. */
+  function resumeSession() {
+    if (!inputPaused) return;
+    inputPaused = false;
+    const profileId = mapper?.profile?.id || defaultProfile;
+    ensureBridge().control("resume", { profile: profileId, card: cardId || undefined });
+    setStatus(
+      running
+        ? `Live: ${mapper?.profile?.label || "motion"}. ${catalog?.hint || ""}`.trim()
+        : "Game ready — tap / keys work now. Start enables optional camera controls.",
+      running ? "live" : "",
+    );
+  }
+
   /**
    * Halt camera + pose, release injected keys, and stop the embed.
-   * Used by goHome / Stop before returning to the library title grid.
+   * Used by goHome / Exit before returning to the library title grid.
    */
   function stop() {
     running = false;
+    inputPaused = false;
+    hideSessionSheet();
 
     try {
       tracker?.close?.();
@@ -445,10 +529,13 @@ if (playMode && catalog) {
   }
 
   stopPlaySession = stop;
+  pausePlaySession = pauseSession;
+  resumePlaySession = resumeSession;
 
   function loop(now) {
     if (!running) return;
     requestAnimationFrame(loop);
+    if (inputPaused) return;
     if (!tracker || !signals) return;
 
     const tracked = tracker.track(video, now);
@@ -493,8 +580,8 @@ if (playMode && catalog) {
   }
 
   btnStart?.addEventListener("click", start);
-  // Stop = fully exit to library home (halt camera/pose/embed), not pause-and-resume.
-  btnStop?.addEventListener("click", (event) => goHome(event));
+  // Pause opens soft Pause/Exit sheet (Continue freezes→resume; Exit → library home).
+  btnStop?.addEventListener("click", (event) => openPauseSheet(event));
 
   gameFrame?.addEventListener("load", () => {
     if (bridge) bridge.setTargets(controlTargets());
@@ -513,7 +600,7 @@ if (playMode && catalog) {
 
   renderCounts();
   setStatus("Game ready — tap / keys work now. Start enables optional camera controls.");
-  // Stop exits to library even before camera Start.
+  // Pause sheet available even before camera Start (Exit still goes home).
   if (btnStop) btnStop.disabled = false;
 
   wireHomeLinks();
