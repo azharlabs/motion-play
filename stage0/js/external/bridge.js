@@ -22,6 +22,16 @@ export class ExternalGameBridge {
     this.targets = targets.filter(Boolean);
   }
 
+  #post(message) {
+    for (const target of this.targets) {
+      try {
+        target.postMessage(message, "*");
+      } catch {
+        // Detached iframe / closed window — ignore.
+      }
+    }
+  }
+
   send(events, meta = {}) {
     for (const event of events ?? []) {
       const message = {
@@ -32,15 +42,21 @@ export class ExternalGameBridge {
         at: typeof performance !== "undefined" ? performance.now() : Date.now(),
         ...meta,
       };
-      for (const target of this.targets) {
-        try {
-          target.postMessage(message, "*");
-        } catch {
-          // Detached iframe / closed window — ignore.
-        }
-      }
+      this.#post(message);
       this.sent += 1;
     }
+  }
+
+  sendPose(pose = {}, meta = {}) {
+    const message = {
+      channel: CHANNEL,
+      type: "pose",
+      at: typeof performance !== "undefined" ? performance.now() : Date.now(),
+      ...pose,
+      ...meta,
+    };
+    this.#post(message);
+    this.sent += 1;
   }
 
   release(events, meta = {}) {

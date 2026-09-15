@@ -26,17 +26,21 @@ The current product catalogue contains 15 experiences built on the existing Stag
 
 The stable internal Stage 0 game IDs are temporarily retained so existing personal bests, activity history, artwork, tests and lazy-loaded engine modules remain compatible during the migration.
 
-## Primary path: controller + Lane Runner
+## Primary path: skill grid → sticky embeds
 
-The default Stage 0 entry (`stage0/index.html`) redirects to `stage0/controller.html`, which embeds the MotionPlay-built **Lane Runner** (`stage0/external-games/lane-runner/`) in a same-origin iframe. Pose tracking maps to the **runner** profile and injects arrow keys into the game via `postMessage` — no Chrome extension required on phone.
+The default Stage 0 entry (`stage0/index.html`) is the **skill grid + howto** home. Each card’s **Play** button opens `play.html?card=<id>`, which embeds a MotionPlay-built sticky mini-game under `stage0/external-games/` and drives it with pose → key/pose bridge (same-origin iframe, no extension required on phone).
 
-Body mapping (runner profile):
+Action families covered by dedicated embeds (remaining cards reuse the closest family with a distinct skin/title):
 
-- Lean left/right → `ArrowLeft` / `ArrowRight` (lane change)
-- Physical jump → `ArrowUp`
-- Crouch → `ArrowDown` (slide)
+- Runner: `jump-runner`, `lane-runner`
+- Racer: `kart-racer`
+- Swipe / reach: `fruit-swipe`, `reach-pop`
+- Punch: `punch-pad`
+- Hold: `hold-pose`
+- Raise: `raise-flap`
+- Squat / lean platformer: `squat-island`
 
-The original 15-game skill arcade remains available as **legacy** mode: open `/?legacy=1` (or `index.html?legacy=1`).
+The original thin Stage 0 arcade engines remain available as **legacy** mode: open `/?legacy=1` (or `index.html?legacy=1`). `controller.html` stays available as a direct Lane Runner entry.
 
 ## External game controller mode
 

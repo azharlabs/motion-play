@@ -1,3 +1,7 @@
+# Stage 0
+
+Default home is the skill grid (`index.html`). **Play** launches sticky embeds via `play.html?card=<id>`. Legacy arcade: `index.html?legacy=1`. Direct runner shell: `controller.html`.
+
 # MotionPlay Stage 0 — Jump the Wall
 
 Web prototype: **front camera → Google MediaPipe Pose Landmarker (BlazePose lite) → jump/duck events → canvas game.**

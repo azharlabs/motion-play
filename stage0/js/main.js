@@ -188,6 +188,15 @@ let entry = null;
 let game = null;
 // The how-to screen waits for the camera; these track that wait, and which
 // selection it belongs to, so an abandoned one cannot start a round later.
+const LEGACY_ARCADE = (() => {
+  try {
+    const params = new URLSearchParams(location.search);
+    return params.get("legacy") === "1" || params.get("mode") === "legacy";
+  } catch {
+    return false;
+  }
+})();
+
 let readyToPlay = false;
 let selectToken = 0;
 let shownStep = -1;
@@ -600,6 +609,16 @@ async function selectGame(id) {
   selectToken += 1;
   const mine = selectToken;
 
+  // Sticky product path: howto is instant; Play opens the embed shell.
+  // Legacy arcade still preloads camera + Stage 0 game modules here.
+  if (!LEGACY_ARCADE) {
+    readyToPlay = true;
+    els.howtoLoading.hidden = true;
+    els.btnHowtoPlay.disabled = false;
+    els.howtoLoadText.textContent = "Ready — Play opens the motion mini-game.";
+    return;
+  }
+
   try {
     if (!poseReady) {
       await startCamera(els.video);
@@ -633,9 +652,11 @@ function showHowTo(meta) {
   els.btnHowtoPlay.disabled = true;
   els.howtoLoading.hidden = false;
   els.howtoLoading.querySelector(".spinner")?.removeAttribute("hidden");
-  els.howtoLoadText.textContent = poseReady
-    ? "Loading game…"
-    : "Starting camera and pose tracking…";
+  els.howtoLoadText.textContent = LEGACY_ARCADE
+    ? poseReady
+      ? "Loading game…"
+      : "Starting camera and pose tracking…"
+    : "Ready when you are…";
 
   setText(els.howtoTitle, meta.title);
   setText(els.howtoTagline, meta.tagline);
@@ -1093,7 +1114,16 @@ function goHome() {
   else show("home");
 }
 
-els.btnHowtoPlay.addEventListener("click", beginCalibration);
+function launchStickyPlay() {
+  if (!entry?.id) return;
+  fx.cue("ui");
+  location.href = `./play.html?card=${encodeURIComponent(entry.id)}`;
+}
+
+els.btnHowtoPlay.addEventListener("click", () => {
+  if (LEGACY_ARCADE) beginCalibration();
+  else launchStickyPlay();
+});
 els.btnHowtoBack.addEventListener("click", goHome);
 el("btn-load-back").addEventListener("click", goHome);
 el("btn-calib-back").addEventListener("click", goHome);

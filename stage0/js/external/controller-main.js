@@ -4,6 +4,7 @@ import { MotionSignals, leadHands } from "../signals.js";
 import { ExternalMotionMapper } from "./motion-mapper.js";
 import { ExternalGameBridge } from "./bridge.js";
 import { CONTROL_PROFILES } from "./profiles.js";
+import { catalogEntry, embedUrl } from "./catalog.js";
 
 const el = (id) => document.getElementById(id);
 const video = el("video");
@@ -14,6 +15,13 @@ const profileSelect = el("profile");
 const btnStart = el("start");
 const btnStop = el("stop");
 const gameFrame = el("game-frame");
+const titleEl = el("game-title");
+
+const params = new URLSearchParams(location.search);
+const cardId = params.get("card") || params.get("game") || "";
+const catalog = cardId ? catalogEntry(cardId) : null;
+const defaultProfile = catalog?.profile || params.get("profile") || "runner";
+const signalMode = catalog?.needs === "upper" ? "upper" : "full";
 
 for (const profile of Object.values(CONTROL_PROFILES)) {
   const option = document.createElement("option");
@@ -21,7 +29,18 @@ for (const profile of Object.values(CONTROL_PROFILES)) {
   option.textContent = profile.label;
   profileSelect.append(option);
 }
-profileSelect.value = "runner";
+profileSelect.value = defaultProfile in CONTROL_PROFILES ? defaultProfile : "runner";
+
+if (catalog) {
+  if (titleEl) titleEl.textContent = catalog.title;
+  document.title = `MotionPlay — ${catalog.title}`;
+  if (gameFrame) {
+    gameFrame.src = embedUrl(cardId);
+    gameFrame.title = catalog.title;
+  }
+} else if (titleEl && !titleEl.textContent.trim()) {
+  titleEl.textContent = "MotionPlay Runner";
+}
 
 let tracker = null;
 let signals = null;
@@ -30,13 +49,14 @@ let bridge = null;
 let running = false;
 let lastSignal = { inFrame: false, hands: { left: {}, right: {} } };
 let lastSignalAt = 0;
+let poseThrottle = 0;
 
 function controlTargets() {
   const targets = [window];
   try {
     if (gameFrame?.contentWindow) targets.push(gameFrame.contentWindow);
   } catch {
-    // Cross-origin would throw; same-origin lane runner should not.
+    // Cross-origin would throw; same-origin embeds should not.
   }
   return targets;
 }
@@ -75,13 +95,18 @@ async function start() {
   try {
     await startCamera(video);
     tracker = await createPoseTracker();
-    signals = new MotionSignals({ mode: "full" });
+    signals = new MotionSignals({ mode: signalMode });
     signals.startCalibration(performance.now());
     mapper = new ExternalMotionMapper(profileSelect.value);
     ensureBridge();
     running = true;
     btnStop.disabled = false;
-    setStatus("Calibrating. Stand back with your full body in frame.", "calibrating");
+    setStatus(
+      signalMode === "upper"
+        ? "Calibrating. Keep head and both arms in frame."
+        : "Calibrating. Stand back with your full body in frame.",
+      "calibrating",
+    );
     requestAnimationFrame(loop);
   } catch (error) {
     setStatus(`Could not start: ${error?.message ?? error}`, "error");
@@ -101,7 +126,7 @@ function stop() {
   mapper = null;
   btnStart.disabled = false;
   btnStop.disabled = true;
-  setStatus("Stopped. Press Start to play the lane runner with your body again.");
+  setStatus("Stopped. Press Start to play with your body again.");
 }
 
 function loop(now) {
@@ -117,19 +142,26 @@ function loop(now) {
 
   const s = leadHands(lastSignal, now - lastSignalAt);
   if (!s.calibrated) {
-    setStatus(s.inFrame ? "Hold still while MotionPlay calibrates…" : "Step back until your full body is visible.", "calibrating");
+    setStatus(s.inFrame ? "Hold still while MotionPlay calibrates…" : "Step back until you are visible.", "calibrating");
     return;
   }
 
+  const hint = catalog?.hint || mapper.profile.description;
   setStatus(
-    s.inFrame
-      ? `Live: ${mapper.profile.label}. Lean · jump · duck drives the runner.`
-      : "Tracking paused. Come back into frame.",
+    s.inFrame ? `Live: ${mapper.profile.label}. ${hint}` : "Tracking paused. Come back into frame.",
     s.inFrame ? "live" : "paused",
   );
 
   const update = mapper.update(s);
-  ensureBridge().send(update.events, { profile: mapper.profile.id });
+  const b = ensureBridge();
+  b.send(update.events, { profile: mapper.profile.id, card: cardId || undefined });
+  if (mapper.profile.sendPose || catalog) {
+    // Throttle pose posts a bit to keep the iframe snappy on phones.
+    if (now - poseThrottle > 32) {
+      poseThrottle = now;
+      b.sendPose(update.pose, { profile: mapper.profile.id, card: cardId || undefined });
+    }
+  }
   renderCounts(update.actions);
 
   const ctx = overlay.getContext("2d");
@@ -161,3 +193,11 @@ window.addEventListener("beforeunload", () => {
 });
 
 renderCounts();
+
+// Auto-start when launched from the skill-grid Play button for a snappier loop.
+if (catalog && params.get("autostart") !== "0") {
+  // Slight delay so the iframe can begin loading first.
+  setTimeout(() => {
+    if (!running) start();
+  }, 250);
+}
