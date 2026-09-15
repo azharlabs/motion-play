@@ -3,7 +3,7 @@ import { createPoseTracker } from "../pose.js";
 import { MotionSignals, leadHands } from "../signals.js";
 import { ExternalMotionMapper } from "./motion-mapper.js";
 import { ExternalGameBridge } from "./bridge.js";
-import { EMBED_CATALOG, catalogEntry, embedUrl, CATALOG_CARD_IDS } from "./catalog.js";
+import { EMBED_CATALOG, catalogEntry, embedUrl, LIBRARY_CARD_IDS } from "./catalog.js";
 import { gameById } from "../games/registry.js";
 import { drawMascotBadge } from "../mascot.js";
 import { drawHowTo, currentClip, clipsFor, clipCue } from "../demo.js";
@@ -142,7 +142,7 @@ function showPlayShell() {
 function paintLibrary() {
   if (!titleGrid) return;
   titleGrid.replaceChildren();
-  for (const id of CATALOG_CARD_IDS) {
+  for (const id of LIBRARY_CARD_IDS) {
     const entry = EMBED_CATALOG[id];
     const meta = gameById(id);
     const li = document.createElement("li");
@@ -387,17 +387,16 @@ if (playMode && catalog) {
         "error",
       );
       if (btnStart) btnStart.disabled = false;
-      // Still allow Stop so a mid-play tap-game can be paused from chrome.
+      // Still allow Stop so kids can exit back to the library.
       if (btnStop) btnStop.disabled = false;
     }
   }
 
   /**
-   * Halt camera + pose, release injected keys, and tell the embed to pause/stop.
-   * Always re-enables Start. Safe to call when camera never started (still pauses game).
+   * Halt camera + pose, release injected keys, and stop the embed.
+   * Used by goHome / Stop before returning to the library title grid.
    */
   function stop() {
-    const wasRunning = running;
     running = false;
 
     try {
@@ -430,13 +429,19 @@ if (playMode && catalog) {
       }
     }
 
-    if (btnStart) btnStart.disabled = false;
+    // Unload embed so play cannot resume from a pause overlay.
+    if (gameFrame) {
+      try {
+        gameFrame.removeAttribute("src");
+        gameFrame.src = "about:blank";
+      } catch {
+        /* ignore */
+      }
+    }
+
+    if (btnStart) btnStart.disabled = true;
     if (btnStop) btnStop.disabled = true;
-    setStatus(
-      wasRunning
-        ? "Stopped. Press Start to play with your body again."
-        : "Game paused. Press Start for body controls, or tap the game to continue.",
-    );
+    setStatus("Returning to games…");
   }
 
   stopPlaySession = stop;
@@ -488,7 +493,8 @@ if (playMode && catalog) {
   }
 
   btnStart?.addEventListener("click", start);
-  btnStop?.addEventListener("click", stop);
+  // Stop = fully exit to library home (halt camera/pose/embed), not pause-and-resume.
+  btnStop?.addEventListener("click", (event) => goHome(event));
 
   gameFrame?.addEventListener("load", () => {
     if (bridge) bridge.setTargets(controlTargets());
@@ -507,7 +513,7 @@ if (playMode && catalog) {
 
   renderCounts();
   setStatus("Game ready — tap / keys work now. Start enables optional camera controls.");
-  // Stop can pause the embed even before camera Start.
+  // Stop exits to library even before camera Start.
   if (btnStop) btnStop.disabled = false;
 
   wireHomeLinks();

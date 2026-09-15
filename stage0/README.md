@@ -1,6 +1,6 @@
 # Stage 0
 
-**Primary path:** `/` → `controller.html` (mascot + logo, 15 sticky titles, howto GIF/canvas preview, Play) → `?card=<id>` sticky embed session. No profile dropdown.
+**Primary path:** `/` → `controller.html` (mascot + logo, 8 library titles, howto GIF/canvas preview, Play) → `?card=<id>` sticky embed session. No profile dropdown.
 
 **Legacy arcade** (original Stage 0 canvas engines under `js/games/`): `index.html?legacy=1` only — not linked from the primary UI.
 
@@ -82,4 +82,4 @@ npm test
 
 ## Controller-first sticky titles
 
-`/` → `controller.html` (15 sticky titles). Play chrome embeds `external-games/<slug>/` and drives them from pose. Open `index.html?legacy=1` for the older 15-game canvas arcade.
+`/` → `controller.html` (8 library titles). Play chrome embeds `external-games/<slug>/` and drives them from pose. Open `index.html?legacy=1` for the older 15-game canvas arcade.
