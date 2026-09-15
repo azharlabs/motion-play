@@ -117,6 +117,142 @@
     });
   }
 
+  /** Listen for parent controller stop/pause/resume control messages. */
+  function installControlListener(onControl) {
+    const CHANNEL = "motionplay.external-control.v1";
+    const handler = (payload) => {
+      if (!payload || payload.channel !== CHANNEL || payload.type !== "control") return;
+      onControl?.(payload);
+    };
+    window.addEventListener("message", (event) => handler(event.data));
+    window.addEventListener("mp-control", (event) => handler(event.detail));
+  }
+
+  /**
+   * Freeze a sticky embed when the parent sends stop/pause.
+   * @param {{ mode: string }} state  game state with a `mode` field ("play" | …)
+   * @param {object|function} hudOrFn  HUD from createHud, or a custom pause callback
+   * @param {{ title?: string, body?: string }} [messages]
+   */
+  function bindParentStop(state, hudOrFn, messages = {}) {
+    installControlListener((payload) => {
+      if (payload.action !== "stop" && payload.action !== "pause") return;
+      if (state.mode !== "play") return;
+      state.mode = "pause";
+      if (typeof hudOrFn === "function") {
+        hudOrFn(payload);
+        return;
+      }
+      const title = messages.title || "Paused";
+      const body =
+        messages.body || "Stopped from MotionPlay · tap or Space to continue";
+      setOverlay(hudOrFn, true, title, body);
+      if (hudOrFn?.status) hudOrFn.status.textContent = "Paused";
+    });
+  }
+
+
+  /** Soft vignette + vertical sky gradient. */
+  function fillSky(ctx, w, h, top, mid, bot) {
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, top);
+    g.addColorStop(0.45, mid || top);
+    g.addColorStop(1, bot);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    const v = ctx.createRadialGradient(w * 0.5, h * 0.35, h * 0.05, w * 0.5, h * 0.5, h * 0.85);
+    v.addColorStop(0, "rgba(255,255,255,0.04)");
+    v.addColorStop(1, "rgba(0,0,0,0.28)");
+    ctx.fillStyle = v;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  /** Cheap deterministic twinkle field (no allocations per star). */
+  function drawStars(ctx, w, h, n, seed, t) {
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    for (let i = 0; i < n; i++) {
+      const x = ((i * 97 + seed * 13) % 1000) / 1000 * w;
+      const y = ((i * 53 + seed * 29) % 1000) / 1000 * h * 0.7;
+      const tw = 0.35 + 0.65 * Math.abs(Math.sin((t || 0) * 0.002 + i));
+      ctx.globalAlpha = tw;
+      ctx.fillRect(x, y, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawGlow(ctx, x, y, r, color, alpha) {
+    const g = ctx.createRadialGradient(x, y, r * 0.15, x, y, r);
+    g.addColorStop(0, color);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.globalAlpha = alpha == null ? 0.55 : alpha;
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawCoin(ctx, x, y, r, t) {
+    const spin = 0.65 + 0.35 * Math.abs(Math.sin((t || 0) * 0.008));
+    drawGlow(ctx, x, y, r * 2.2, "rgba(251,191,36,0.55)", 0.5);
+    ctx.beginPath();
+    ctx.ellipse(x, y, r * spin, r, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "#fbbf24";
+    ctx.fill();
+    ctx.strokeStyle = "#f59e0b";
+    ctx.lineWidth = Math.max(1.5, r * 0.18);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.beginPath();
+    ctx.ellipse(x - r * 0.2, y - r * 0.25, r * 0.25 * spin, r * 0.18, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /** Simple cartoon hero: shadow + body + head + eyes. */
+  function drawHero(ctx, x, y, s, accent, opts) {
+    opts = opts || {};
+    const squash = opts.squash == null ? 1 : opts.squash;
+    const bodyH = (opts.bodyH || 70) * s * squash;
+    const bodyW = (opts.bodyW || 36) * s * (squash < 0.8 ? 1.25 : 1);
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.beginPath();
+    ctx.ellipse(x, y + 4 * s, 20 * s, 7 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    roundRect(ctx, x - bodyW / 2, y - bodyH, bodyW, bodyH, 10 * s);
+    ctx.fillStyle = accent;
+    ctx.fill();
+    // belly highlight
+    ctx.fillStyle = "rgba(255,255,255,0.18)";
+    roundRect(ctx, x - bodyW * 0.22, y - bodyH * 0.85, bodyW * 0.44, bodyH * 0.45, 8 * s);
+    ctx.fill();
+    if (squash > 0.7) {
+      const hy = y - bodyH - 12 * s;
+      ctx.fillStyle = opts.skin || "#fdba74";
+      ctx.beginPath();
+      ctx.arc(x, hy, 13 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#1f2937";
+      ctx.beginPath();
+      ctx.arc(x - 4 * s, hy - 1 * s, 2 * s, 0, Math.PI * 2);
+      ctx.arc(x + 4 * s, hy - 1 * s, 2 * s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawHills(ctx, w, h, y0, color, seed, scroll) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    for (let i = 0; i <= 8; i++) {
+      const x = (i / 8) * w;
+      const y = y0 + Math.sin(i * 1.3 + seed + (scroll || 0)) * 18;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(w, h);
+    ctx.closePath();
+    ctx.fill();
+  }
+
   function shellHtmlMeta(title) {
     document.title = title || document.title;
   }
@@ -135,6 +271,14 @@
     roundRect,
     latestPose,
     installPoseListener,
+    installControlListener,
+    bindParentStop,
+    fillSky,
+    drawStars,
+    drawGlow,
+    drawCoin,
+    drawHero,
+    drawHills,
     shellHtmlMeta,
   };
 })(window);

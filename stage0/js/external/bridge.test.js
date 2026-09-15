@@ -20,4 +20,16 @@ describe("ExternalGameBridge", () => {
     assert.equal(seen[0].message.pressed, true);
     assert.equal(seen[1].name, "b");
   });
+
+  it("posts stop/pause control messages for embeds", () => {
+    const seen = [];
+    const target = { postMessage(message) { seen.push(message); } };
+    const bridge = new ExternalGameBridge({ target });
+    bridge.control("stop", { card: "lane-runner" });
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].channel, EXTERNAL_CONTROL_CHANNEL);
+    assert.equal(seen[0].type, "control");
+    assert.equal(seen[0].action, "stop");
+    assert.equal(seen[0].card, "lane-runner");
+  });
 });

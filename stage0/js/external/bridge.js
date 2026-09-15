@@ -32,15 +32,21 @@ export class ExternalGameBridge {
     }
   }
 
+  #stamp(meta = {}) {
+    return {
+      channel: CHANNEL,
+      at: typeof performance !== "undefined" ? performance.now() : Date.now(),
+      ...meta,
+    };
+  }
+
   send(events, meta = {}) {
     for (const event of events ?? []) {
       const message = {
-        channel: CHANNEL,
+        ...this.#stamp(meta),
         type: "key",
         key: event.key,
         pressed: Boolean(event.pressed),
-        at: typeof performance !== "undefined" ? performance.now() : Date.now(),
-        ...meta,
       };
       this.#post(message);
       this.sent += 1;
@@ -49,11 +55,23 @@ export class ExternalGameBridge {
 
   sendPose(pose = {}, meta = {}) {
     const message = {
-      channel: CHANNEL,
+      ...this.#stamp(meta),
       type: "pose",
-      at: typeof performance !== "undefined" ? performance.now() : Date.now(),
       ...pose,
-      ...meta,
+    };
+    this.#post(message);
+    this.sent += 1;
+  }
+
+  /**
+   * Session control for embeds: stop | pause | resume.
+   * stop/pause should release held keys in the embed and freeze gameplay.
+   */
+  control(action, meta = {}) {
+    const message = {
+      ...this.#stamp(meta),
+      type: "control",
+      action: String(action || ""),
     };
     this.#post(message);
     this.sent += 1;

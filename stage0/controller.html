@@ -17,14 +17,13 @@
   <!-- Primary hub: 15 sticky titles -->
   <section id="library">
     <header class="mp-head">
-      <canvas id="logo-mascot" width="120" height="120" aria-hidden="true"></canvas>
-      <div class="mp-brand">
-        <h1>Motion<span>Play</span></h1>
-        <p>Fifteen camera games. Your body is the controller.</p>
-      </div>
-      <div class="mp-links">
-        <a href="https://github.com/azharlabs/motion-play" target="_blank" rel="noopener">GitHub</a>
-      </div>
+      <a href="./controller.html" class="mp-home" id="home-logo" aria-label="MotionPlay home">
+        <canvas id="logo-mascot" width="120" height="120" aria-hidden="true"></canvas>
+        <div class="mp-brand">
+          <h1>Motion<span>Play</span></h1>
+          <p>Fifteen camera games. Your body is the controller.</p>
+        </div>
+      </a>
     </header>
 
     <h2 class="section-head">Pick a motion game</h2>
@@ -37,6 +36,10 @@
   <!-- Preview / howto (after picking a title) -->
   <section id="preview" class="preview-screen" hidden>
     <header class="mp-head">
+      <a href="./controller.html" class="mp-home mp-home-compact" id="home-logo-preview" aria-label="MotionPlay home">
+        <canvas id="logo-mascot-preview" class="logo-mascot" width="120" height="120" aria-hidden="true"></canvas>
+        <span class="mp-wordmark">Motion<span>Play</span></span>
+      </a>
       <button type="button" id="btn-preview-back" class="icon-btn" aria-label="Back to all games">
         <span aria-hidden="true">←</span>
       </button>
@@ -70,7 +73,11 @@
   <!-- Play session (shown when Play is pressed / ?card=) -->
   <div id="play-shell" hidden>
     <header class="play-head">
-      <div>
+      <a href="./controller.html" class="mp-home mp-home-play" id="home-logo-play" aria-label="MotionPlay home">
+        <canvas id="logo-mascot-play" class="logo-mascot" width="80" height="80" aria-hidden="true"></canvas>
+        <span class="mp-wordmark">Motion<span>Play</span></span>
+      </a>
+      <div class="play-title-wrap">
         <h1 id="game-title">Motion<span>Play</span></h1>
       </div>
       <div class="controls">

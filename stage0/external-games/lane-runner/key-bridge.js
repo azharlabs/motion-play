@@ -1,6 +1,9 @@
 /**
  * Receives MotionPlay external-control messages and synthesizes keyboard events
  * so this same-origin game can be driven from the parent controller iframe.
+ *
+ * Also handles session control (stop/pause): releases every injected key and
+ * notifies the embed via `mp-control` + optional `__motionPlayOnControl`.
  */
 (function () {
   const CHANNEL = "motionplay.external-control.v1";
@@ -39,16 +42,52 @@
     document.dispatchEvent(event);
   }
 
+  function releaseAll() {
+    for (const key of [...pressed]) dispatchKey(key, false);
+  }
+
+  function notifyControl(payload) {
+    try {
+      window.dispatchEvent(new CustomEvent("mp-control", { detail: payload }));
+    } catch {
+      /* ignore */
+    }
+    if (typeof window.__motionPlayOnControl === "function") {
+      try {
+        window.__motionPlayOnControl(payload);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
   window.addEventListener("message", (event) => {
     const payload = event.data;
-    if (payload?.channel !== CHANNEL || payload?.type !== "key") return;
-    if (!payload.key) return;
-    dispatchKey(payload.key, Boolean(payload.pressed));
+    if (payload?.channel !== CHANNEL) return;
+
+    if (payload.type === "key") {
+      if (!payload.key) return;
+      dispatchKey(payload.key, Boolean(payload.pressed));
+      return;
+    }
+
+    if (payload.type === "control") {
+      const action = payload.action;
+      if (action === "stop" || action === "pause") {
+        releaseAll();
+        notifyControl(payload);
+      } else if (action === "resume") {
+        notifyControl(payload);
+      }
+    }
   });
 
   window.addEventListener("blur", () => {
-    for (const key of [...pressed]) dispatchKey(key, false);
+    releaseAll();
   });
 
-  window.__motionPlayKeyBridge = { channel: CHANNEL };
+  window.__motionPlayKeyBridge = {
+    channel: CHANNEL,
+    releaseAll,
+  };
 })();

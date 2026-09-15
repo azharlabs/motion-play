@@ -378,6 +378,59 @@ canvas.overlay { pointer-events: none; }
   left: -9999px;
 }
 
+
+/* ---------- MotionPlay home logo link ---------- */
+.mp-home {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+  border-radius: 14px;
+  outline-offset: 3px;
+}
+.mp-home:hover .mp-brand h1,
+.mp-home:hover .mp-wordmark {
+  filter: brightness(1.08);
+}
+.mp-home:focus-visible {
+  outline: 2px solid var(--orange);
+}
+.mp-wordmark {
+  font-weight: 900;
+  font-size: clamp(18px, 4vw, 24px);
+  letter-spacing: -0.4px;
+  color: var(--teal);
+  line-height: 1;
+}
+.mp-wordmark span { color: var(--orange); }
+.mp-home-compact .logo-mascot,
+.mp-home-play .logo-mascot,
+#logo-mascot-preview,
+#logo-mascot-play {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+}
+.mp-home-play .mp-wordmark {
+  color: #ecfdf8;
+  font-size: clamp(14px, 3.2vw, 18px);
+}
+.play-title-wrap {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.play-title-wrap h1 {
+  margin: 0;
+  font-size: clamp(14px, 3.2vw, 18px);
+  color: #99f6e4;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ---------- logo mascot (controller home) ---------- */
 
 #logo-mascot {
