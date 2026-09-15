@@ -1,4 +1,4 @@
-import { startCamera } from "../camera.js";
+import { startCamera, stopCamera } from "../camera.js";
 import { createPoseTracker } from "../pose.js";
 import { MotionSignals, leadHands } from "../signals.js";
 import { ExternalMotionMapper } from "./motion-mapper.js";
@@ -14,6 +14,8 @@ const preview = el("preview");
 const playShell = el("play-shell");
 const titleGrid = el("title-grid");
 const logo = el("logo-mascot");
+const logoPreview = el("logo-mascot-preview");
+const logoPlay = el("logo-mascot-play");
 const howtoCanvas = el("howto-canvas");
 const video = el("video");
 const overlay = el("overlay");
@@ -36,10 +38,24 @@ let previewMeta = null;
 let previewShownStep = -1;
 let rafId = 0;
 
+/** Play-session stop hook (set when play mode boots). */
+let stopPlaySession = null;
+
 function hideAll() {
   if (library) library.hidden = true;
   if (preview) preview.hidden = true;
   if (playShell) playShell.hidden = true;
+}
+
+function clearPlayQuery() {
+  const url = new URL(location.href);
+  url.searchParams.delete("card");
+  url.searchParams.delete("game");
+  url.searchParams.delete("preview");
+  url.searchParams.delete("profile");
+  url.searchParams.delete("autostart");
+  const q = url.searchParams.toString();
+  return url.pathname + (q ? `?${q}` : "") + url.hash;
 }
 
 function showLibrary() {
@@ -185,15 +201,62 @@ function drawHowToFrame(now) {
   for (let i = 0; i < items.length; i += 1) items[i].classList.toggle("showing", i === index);
 }
 
+function paintLogo(canvas, now, size) {
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const r = size || Math.min(canvas.width, canvas.height) * 0.92;
+  drawMascotBadge(ctx, canvas.width / 2, canvas.height / 2, r, now);
+}
+
 function chromeLoop(now) {
   rafId = requestAnimationFrame(chromeLoop);
-  if (library && !library.hidden && logo) {
-    const ctx = logo.getContext("2d");
-    ctx.clearRect(0, 0, logo.width, logo.height);
-    drawMascotBadge(ctx, 60, 60, 110, now);
+  if (library && !library.hidden && logo) paintLogo(logo, now, 110);
+  if (preview && !preview.hidden) {
+    paintLogo(logoPreview, now, 100);
+    if (previewMeta) drawHowToFrame(now);
   }
-  if (preview && !preview.hidden && previewMeta) {
-    drawHowToFrame(now);
+  if (playShell && !playShell.hidden) paintLogo(logoPlay, now, 72);
+}
+
+function goHome(event) {
+  // Always clear play session (camera / keys / embed) before leaving play.
+  if (typeof stopPlaySession === "function") {
+    try {
+      stopPlaySession();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const onPlay = playShell && !playShell.hidden;
+  const onPreview = preview && !preview.hidden;
+
+  // Soft-nav when library chrome is available on this page.
+  if (!onPlay && library) {
+    event?.preventDefault?.();
+    history.replaceState(null, "", clearPlayQuery());
+    showLibrary();
+    return;
+  }
+
+  if (onPreview && library) {
+    event?.preventDefault?.();
+    history.replaceState(null, "", clearPlayQuery());
+    showLibrary();
+    return;
+  }
+
+  // Play shell with ?card= (or play.html): full navigation home after cleanup.
+  if (onPlay) {
+    event?.preventDefault?.();
+    location.assign("./controller.html");
+  }
+}
+
+function wireHomeLinks() {
+  for (const node of document.querySelectorAll(".mp-home, #back-library, #back-home")) {
+    node.addEventListener("click", goHome);
   }
 }
 
@@ -208,10 +271,15 @@ if (!catalog) {
   btnPreviewBack?.addEventListener("click", () => {
     const url = new URL(location.href);
     url.searchParams.delete("preview");
-    history.replaceState(null, "", url.pathname + (url.searchParams.toString() ? "?" + url.searchParams.toString() : "") + url.hash);
+    history.replaceState(
+      null,
+      "",
+      url.pathname + (url.searchParams.toString() ? "?" + url.searchParams.toString() : "") + url.hash,
+    );
     showLibrary();
   });
   requestAnimationFrame(chromeLoop);
+  wireHomeLinks();
 }
 
 /* ---- play session ---- */
@@ -219,6 +287,7 @@ const playMode = Boolean(playShell && (catalog || !library));
 
 if (playMode && catalog) {
   showPlayShell();
+  requestAnimationFrame(chromeLoop);
 
   const defaultProfile = catalog?.profile || params.get("profile") || "runner";
   const signalMode = catalog?.needs === "upper" ? "upper" : "full";
@@ -318,23 +387,59 @@ if (playMode && catalog) {
         "error",
       );
       if (btnStart) btnStart.disabled = false;
+      // Still allow Stop so a mid-play tap-game can be paused from chrome.
+      if (btnStop) btnStop.disabled = false;
     }
   }
 
+  /**
+   * Halt camera + pose, release injected keys, and tell the embed to pause/stop.
+   * Always re-enables Start. Safe to call when camera never started (still pauses game).
+   */
   function stop() {
-    if (!running) return;
+    const wasRunning = running;
     running = false;
-    ensureBridge().release(mapper?.releaseAll() ?? [], { profile: mapper?.profile?.id });
-    const stream = video?.srcObject;
-    if (stream?.getTracks) for (const track of stream.getTracks()) track.stop();
-    if (video) video.srcObject = null;
+
+    try {
+      tracker?.close?.();
+    } catch {
+      /* ignore */
+    }
     tracker = null;
     signals = null;
+
+    const released = mapper?.releaseAll?.() ?? [];
+    const profileId = mapper?.profile?.id || defaultProfile;
     mapper = null;
+
+    const b = ensureBridge();
+    if (released.length) b.release(released, { profile: profileId, card: cardId || undefined });
+    // Key-bridge releases any residual held keys; embeds freeze on stop/pause.
+    b.control("stop", { profile: profileId, card: cardId || undefined });
+
+    const stream = video?.srcObject;
+    stopCamera(stream);
+    if (video) video.srcObject = null;
+
+    if (overlay) {
+      try {
+        const ctx = overlay.getContext("2d");
+        ctx?.clearRect(0, 0, overlay.width || 0, overlay.height || 0);
+      } catch {
+        /* ignore */
+      }
+    }
+
     if (btnStart) btnStart.disabled = false;
     if (btnStop) btnStop.disabled = true;
-    setStatus("Stopped. Press Start to play with your body again.");
+    setStatus(
+      wasRunning
+        ? "Stopped. Press Start to play with your body again."
+        : "Game paused. Press Start for body controls, or tap the game to continue.",
+    );
   }
+
+  stopPlaySession = stop;
 
   function loop(now) {
     if (!running) return;
@@ -390,11 +495,22 @@ if (playMode && catalog) {
   });
 
   window.addEventListener("beforeunload", () => {
-    if (running) ensureBridge().release(mapper?.releaseAll() ?? [], { profile: mapper?.profile?.id });
+    if (running) {
+      try {
+        ensureBridge().release(mapper?.releaseAll() ?? [], { profile: mapper?.profile?.id });
+        ensureBridge().control("stop", { profile: mapper?.profile?.id, card: cardId || undefined });
+      } catch {
+        /* ignore */
+      }
+    }
   });
 
   renderCounts();
   setStatus("Game ready — tap / keys work now. Start enables optional camera controls.");
+  // Stop can pause the embed even before camera Start.
+  if (btnStop) btnStop.disabled = false;
+
+  wireHomeLinks();
 
   // Camera enhances controls when available; never gate the embed on it.
   if (catalog && params.get("autostart") !== "0") {
@@ -405,4 +521,6 @@ if (playMode && catalog) {
 } else if (playMode && !catalog && !library) {
   // play.html without ?card= — still show shell with default embed
   showPlayShell();
+  requestAnimationFrame(chromeLoop);
+  wireHomeLinks();
 }

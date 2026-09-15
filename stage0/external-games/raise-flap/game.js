@@ -1,6 +1,6 @@
 /** Raise Flap — raise/lower arms to fly. MotionPlay original. */
 (() => {
-  const { qs, readConfig, resizeCanvas, createHud, setOverlay, loadBest, saveBest, burst, stepParticles, drawParticles, latestPose, installPoseListener, roundRect } = MPMini;
+  const { qs, readConfig, resizeCanvas, createHud, setOverlay, loadBest, saveBest, burst, stepParticles, drawParticles, latestPose, installPoseListener, bindParentStop, fillSky, drawStars, drawGlow, drawCoin, drawHero, drawHills, roundRect } = MPMini;
   installPoseListener();
   const cfg = readConfig();
   const title = cfg.title || "Space Defender";
@@ -9,6 +9,7 @@
   const KEY = "motionplay.raise-flap.best";
   let BEST = loadBest(KEY);
   const state = { mode: "ready", y: 0.5, score: 0, hits: 0, spawn: 0.7, things: [], particles: [], last: 0, raise: 0.5 };
+  bindParentStop(state, hud);
 
   function start() {
     Object.assign(state, { mode: "play", y: 0.5, score: 0, hits: 0, spawn: 0.6, things: [], particles: [], raise: 0.5 });
@@ -19,11 +20,11 @@
     setOverlay(hud, true, "Flight over!", `Score ${Math.floor(state.score)} · Tap / Space to retry`);
   }
   window.addEventListener("keydown", (e) => {
-    if (e.key === " " || e.key === "Enter") { if (state.mode === "ready" || state.mode === "over") start(); }
+    if (e.key === " " || e.key === "Enter") { if (state.mode === "ready" || state.mode === "over") start(); else if (state.mode === "pause") { state.mode = "play"; setOverlay(hud, false); } }
     if (e.key === "ArrowUp" || e.key === "w") state.raise = Math.min(1, state.raise + 0.08);
     if (e.key === "ArrowDown" || e.key === "s") state.raise = Math.max(0, state.raise - 0.08);
   });
-  hud.overlay.addEventListener("click", () => { if (state.mode === "ready" || state.mode === "over") start(); });
+  hud.overlay.addEventListener("click", () => { if (state.mode === "ready" || state.mode === "over") start(); else if (state.mode === "pause") { state.mode = "play"; setOverlay(hud, false); } });
 
   function update(dt) {
     if (state.mode !== "play") return;
@@ -64,23 +65,36 @@
     hud.score.textContent = String(Math.floor(state.score));
   }
 
+
   function draw(w, h) {
-    const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, "#042f2e"); g.addColorStop(1, "#0f172a");
-    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    // stars
-    ctx.fillStyle = "rgba(255,255,255,0.5)";
-    for (let i = 0; i < 40; i++) ctx.fillRect((i * 97) % w, (i * 53) % h, 2, 2);
-    for (const t of state.things) {
-      const x = t.x * w, gapTop = (t.gapY - t.gap / 2) * h, gapBot = (t.gapY + t.gap / 2) * h;
-      ctx.fillStyle = "#334155";
+    const t = performance.now();
+    fillSky(ctx, w, h, "#042f2e", "#115e59", "#0f172a");
+    drawStars(ctx, w, h, 48, 11, t);
+    // nebula
+    drawGlow(ctx, w * 0.7, h * 0.25, w * 0.35, "rgba(20,184,166,0.25)", 0.5);
+    drawGlow(ctx, w * 0.2, h * 0.55, w * 0.25, "rgba(56,189,248,0.18)", 0.45);
+    for (const th of state.things) {
+      const x = th.x * w, gapTop = (th.gapY - th.gap / 2) * h, gapBot = (th.gapY + th.gap / 2) * h;
+      const pillar = ctx.createLinearGradient(x, 0, x + 54, 0);
+      pillar.addColorStop(0, "#1e293b"); pillar.addColorStop(0.5, "#475569"); pillar.addColorStop(1, "#1e293b");
+      ctx.fillStyle = pillar;
       roundRect(ctx, x, 0, 54, gapTop, 8); ctx.fill();
       roundRect(ctx, x, gapBot, 54, h - gapBot, 8); ctx.fill();
-      ctx.fillStyle = accent; ctx.fillRect(x, gapTop - 6, 54, 6); ctx.fillRect(x, gapBot, 54, 6);
+      drawGlow(ctx, x + 27, gapTop, 40, "rgba(20,184,166,0.35)");
+      ctx.fillStyle = accent; ctx.fillRect(x, gapTop - 8, 54, 8); ctx.fillRect(x, gapBot, 54, 8);
+      // rivets
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(x + 12 + i * 15, gapTop - 4, 2, 0, Math.PI * 2); ctx.fill(); }
     }
     const px = w * 0.22, py = state.y * h;
-    ctx.fillStyle = accent; roundRect(ctx, px - 22, py - 14, 44, 28, 12); ctx.fill();
-    ctx.fillStyle = "#99f6e4"; ctx.beginPath(); ctx.arc(px + 10, py - 2, 5, 0, Math.PI * 2); ctx.fill();
+    const flap = Math.sin(t * 0.012) * 10;
+    drawGlow(ctx, px, py, 48, "rgba(20,184,166,0.4)");
+    // ship
+    ctx.fillStyle = accent; roundRect(ctx, px - 24, py - 14, 48, 28, 12); ctx.fill();
+    ctx.fillStyle = "#99f6e4"; ctx.beginPath(); ctx.arc(px + 12, py - 2, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(153,246,228,0.7)";
+    ctx.beginPath(); ctx.moveTo(px - 24, py); ctx.lineTo(px - 40, py - 8 - flap); ctx.lineTo(px - 40, py + 8 + flap); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(px - 10, py + 10); ctx.lineTo(px - 28, py + 22 + flap * 0.5); ctx.lineTo(px + 6, py + 14); ctx.closePath(); ctx.fill();
     drawParticles(ctx, state.particles);
     ctx.fillStyle = "#e2e8f0"; ctx.font = "700 16px system-ui"; ctx.textAlign = "left";
     const lives = Math.max(0, 3 - state.hits);

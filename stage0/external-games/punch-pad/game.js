@@ -1,6 +1,6 @@
 /** Punch Pad — punch glowing targets. MotionPlay original. */
 (() => {
-  const { qs, readConfig, resizeCanvas, createHud, setOverlay, loadBest, saveBest, burst, stepParticles, drawParticles, latestPose, installPoseListener, roundRect } = MPMini;
+  const { qs, readConfig, resizeCanvas, createHud, setOverlay, loadBest, saveBest, burst, stepParticles, drawParticles, latestPose, installPoseListener, bindParentStop, fillSky, drawStars, drawGlow, drawCoin, drawHero, drawHills, roundRect } = MPMini;
   installPoseListener();
   const cfg = readConfig();
   const skin = cfg.skin || "box";
@@ -16,6 +16,7 @@
     { id: "RK", x: 0.65, y: 0.72, side: "right", kick: true },
   ].filter((p) => skin === "drums" || !p.kick);
   const state = { mode: "ready", score: 0, misses: 0, active: null, timer: 0, particles: [], last: 0, punchL: false, punchR: false, cool: 0 };
+  bindParentStop(state, hud);
 
   function start() {
     Object.assign(state, { mode: "play", score: 0, misses: 0, active: null, timer: 0.3, particles: [], cool: 0 });
@@ -30,13 +31,13 @@
     state.timer = Math.max(0.7, 1.4 - state.score * 0.02);
   }
   window.addEventListener("keydown", (e) => {
-    if (e.key === " " || e.key === "Enter") { if (state.mode === "ready" || state.mode === "over") start(); return; }
+    if (e.key === " " || e.key === "Enter") { if (state.mode === "ready" || state.mode === "over") start(); else if (state.mode === "pause") { state.mode = "play"; setOverlay(hud, false); } return; }
     if (state.mode !== "play" || state.cool > 0) return;
     if (e.key === "ArrowLeft" || e.key === "z" || e.key === "Z") tryHit("left", false);
     if (e.key === "ArrowRight" || e.key === "x" || e.key === "X") tryHit("right", false);
     if (e.key === "ArrowDown") tryHit(Math.random() < 0.5 ? "left" : "right", true);
   });
-  hud.overlay.addEventListener("click", () => { if (state.mode === "ready" || state.mode === "over") start(); });
+  hud.overlay.addEventListener("click", () => { if (state.mode === "ready" || state.mode === "over") start(); else if (state.mode === "pause") { state.mode = "play"; setOverlay(hud, false); } });
 
   function tryHit(side, kick) {
     state.cool = 0.18;
@@ -80,16 +81,37 @@
     hud.score.textContent = String(state.score);
   }
 
+
   function draw(w, h) {
-    ctx.fillStyle = "#1c1917"; ctx.fillRect(0, 0, w, h);
-    for (const p of pads) {
-      const lit = state.active && state.active.id === p.id;
-      const x = p.x * w, y = p.y * h, r = Math.min(w, h) * 0.09;
+    const t = performance.now();
+    fillSky(ctx, w, h, skin === "drums" ? "#422006" : "#1c1917", skin === "drums" ? "#78350f" : "#292524", "#0c0a09");
+    // gym / jungle props
+    if (skin === "drums") {
+      drawHills(ctx, w, h, h * 0.78, "rgba(67,20,7,0.9)", 1.1, t * 0.0003);
+      drawHills(ctx, w, h, h * 0.88, "rgba(28,25,23,0.95)", 2.0, t * 0.0005);
+    } else {
+      // ropes
+      ctx.strokeStyle = "rgba(248,250,252,0.25)"; ctx.lineWidth = 4;
+      for (const yy of [h * 0.22, h * 0.3, h * 0.38]) {
+        ctx.beginPath(); ctx.moveTo(w * 0.08, yy); ctx.lineTo(w * 0.92, yy); ctx.stroke();
+      }
+      ctx.strokeStyle = "rgba(248,250,252,0.35)"; ctx.lineWidth = 10;
+      ctx.strokeRect(w * 0.08, h * 0.18, w * 0.84, h * 0.64);
+    }
+    for (const pad of pads) {
+      const lit = state.active && state.active.id === pad.id;
+      const x = pad.x * w, y = pad.y * h, r = Math.min(w, h) * 0.09;
+      if (lit) drawGlow(ctx, x, y, r * 2.8, accent, 0.55 + 0.2 * Math.sin(t * 0.01));
+      ctx.beginPath(); ctx.arc(x, y, r * 1.15, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fill();
       ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fillStyle = lit ? accent : "#292524"; ctx.fill();
+      const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.2, x, y, r);
+      g.addColorStop(0, lit ? "#fff7ed" : "#44403c");
+      g.addColorStop(1, lit ? accent : "#1c1917");
+      ctx.fillStyle = g; ctx.fill();
       ctx.strokeStyle = lit ? "#fff" : "#57534e"; ctx.lineWidth = lit ? 4 : 2; ctx.stroke();
       ctx.fillStyle = "#fff"; ctx.font = "bold 18px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(p.kick ? "🦵" : "🥊", x, y);
+      ctx.fillText(pad.kick ? "🦵" : (skin === "drums" ? "🥁" : "🥊"), x, y);
     }
     drawParticles(ctx, state.particles);
     ctx.fillStyle = "#e2e8f0"; ctx.font = "700 16px system-ui"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";

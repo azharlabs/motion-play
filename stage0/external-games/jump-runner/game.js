@@ -1,6 +1,6 @@
 /** Motion Runner — jump/duck focused endless runner. MotionPlay original. */
 (() => {
-  const { qs, readConfig, resizeCanvas, createHud, setOverlay, loadBest, saveBest, burst, stepParticles, drawParticles, roundRect, installPoseListener } = MPMini;
+  const { qs, readConfig, resizeCanvas, createHud, setOverlay, loadBest, saveBest, burst, stepParticles, drawParticles, roundRect, installPoseListener, bindParentStop, fillSky, drawStars, drawGlow, drawCoin, drawHero, drawHills } = MPMini;
   installPoseListener();
   const cfg = readConfig();
   const title = cfg.title || "Motion Runner";
@@ -15,6 +15,7 @@
     distance: 0, score: 0, coins: 0, speed: 1, spawnT: 0.7, things: [], particles: [],
     shake: 0, hits: 0, last: 0,
   };
+  bindParentStop(state, hud);
 
   function reset() {
     Object.assign(state, { lane: 1, laneX: 1, y: 0, vy: 0, sliding: 0, invuln: 0, distance: 0, score: 0, coins: 0, speed: 1, spawnT: 0.7, things: [], particles: [], shake: 0, hits: 0 });
@@ -46,10 +47,10 @@
     else if (k === "ArrowRight" || k === "d") { e.preventDefault(); changeLane(1); }
     else if (k === "ArrowUp" || k === "w") { e.preventDefault(); jump(); }
     else if (k === "ArrowDown" || k === "s") { e.preventDefault(); slide(); }
-    else if (k === " " || k === "Enter") { e.preventDefault(); if (state.mode === "ready" || state.mode === "over") start(); }
+    else if (k === " " || k === "Enter") { e.preventDefault(); if (state.mode === "ready" || state.mode === "over") start(); else if (state.mode === "pause") { state.mode = "play"; setOverlay(hud, false); } }
   }
   window.addEventListener("keydown", onKey);
-  hud.overlay.addEventListener("click", () => { if (state.mode === "ready" || state.mode === "over") start(); });
+  hud.overlay.addEventListener("click", () => { if (state.mode === "ready" || state.mode === "over") start(); else if (state.mode === "pause") { state.mode = "play"; setOverlay(hud, false); } });
 
   function update(dt) {
     if (state.mode !== "play") return;
@@ -88,28 +89,43 @@
     return { x, y, scale: 0.25 + ease * 0.95 };
   }
 
+
   function draw(w, h) {
-    const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, "#1a0b05"); g.addColorStop(0.4, "#3b1d0b"); g.addColorStop(1, "#0b1624");
-    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    const t = state.distance || 0;
+    fillSky(ctx, w, h, "#1a0b05", "#3b1d0b", "#0b1624");
+    drawStars(ctx, w, h, 36, 3, t * 20);
+    drawHills(ctx, w, h, h * 0.34, "rgba(67,20,7,0.9)", 1.2, t * 0.01);
+    drawHills(ctx, w, h, h * 0.42, "rgba(28,15,8,0.95)", 2.1, t * 0.02);
     const horizon = h * 0.28, cx = w * 0.5, topW = w * 0.16, botW = w * 0.92;
     ctx.beginPath(); ctx.moveTo(cx - topW / 2, horizon); ctx.lineTo(cx + topW / 2, horizon); ctx.lineTo(cx + botW / 2, h); ctx.lineTo(cx - botW / 2, h); ctx.closePath();
-    ctx.fillStyle = "#1e293b"; ctx.fill();
-    for (const t of [...state.things].sort((a, b) => b.z - a.z)) {
-      const p = project(t.lane, t.z, w, h), s = p.scale;
-      if (t.kind === "coin") { ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(p.x, p.y - 28 * s, 12 * s, 0, Math.PI * 2); ctx.fill(); continue; }
-      const bh = t.kind === "low" ? 34 * s : t.kind === "high" ? 26 * s : 68 * s;
-      let y0 = p.y - bh; if (t.kind === "high") y0 -= 55 * s;
-      ctx.fillStyle = t.kind === "low" ? "#fb923c" : t.kind === "high" ? "#38bdf8" : accent;
+    const road = ctx.createLinearGradient(0, horizon, 0, h);
+    road.addColorStop(0, "#334155"); road.addColorStop(1, "#0f172a");
+    ctx.fillStyle = road; ctx.fill();
+    // dashed lanes
+    ctx.save();
+    ctx.clip();
+    const scroll = (t * 0.08) % 1;
+    ctx.strokeStyle = "rgba(248,250,252,0.45)"; ctx.lineWidth = 3;
+    for (let i = 0; i < 12; i++) {
+      const u = (i / 12 + scroll) % 1; const y = horizon + u * u * (h - horizon);
+      ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(cx, y + 10 + u * 22); ctx.stroke();
+    }
+    ctx.restore();
+    for (const th of [...state.things].sort((a, b) => b.z - a.z)) {
+      const p = project(th.lane, th.z, w, h), s = p.scale;
+      if (th.kind === "coin") { drawCoin(ctx, p.x, p.y - 28 * s, 12 * s, t * 40); continue; }
+      const bh = th.kind === "low" ? 34 * s : th.kind === "high" ? 26 * s : 68 * s;
+      let y0 = p.y - bh; if (th.kind === "high") y0 -= 55 * s;
+      drawGlow(ctx, p.x, y0 + bh / 2, 40 * s, th.kind === "low" ? "rgba(251,146,60,0.45)" : th.kind === "high" ? "rgba(56,189,248,0.4)" : "rgba(249,115,22,0.4)");
+      ctx.fillStyle = th.kind === "low" ? "#fb923c" : th.kind === "high" ? "#38bdf8" : accent;
       roundRect(ctx, p.x - 22 * s, y0, 44 * s, bh, 8 * s); ctx.fill();
-      ctx.fillStyle = "#fff"; ctx.font = `bold ${Math.max(10, 13 * s)}px system-ui`; ctx.textAlign = "center";
-      ctx.fillText(t.kind === "low" ? "↑ JUMP" : t.kind === "high" ? "↓ DUCK" : "WALL", p.x, y0 + bh * 0.65);
+      ctx.fillStyle = "rgba(255,255,255,0.9)"; ctx.font = `bold ${Math.max(10, 13 * s)}px system-ui`; ctx.textAlign = "center";
+      ctx.fillText(th.kind === "low" ? "↑ JUMP" : th.kind === "high" ? "↓ DUCK" : "WALL", p.x, y0 + bh * 0.65);
     }
     const p = project(state.laneX, 0.12, w, h), s = p.scale;
     const lift = state.y * 0.35 * s, squash = state.sliding > 0 ? 0.55 : 1;
     if (!(state.invuln > 0 && Math.floor(state.invuln * 20) % 2 === 0)) {
-      ctx.fillStyle = accent; roundRect(ctx, p.x - 18 * s, p.y - lift - 70 * s * squash, 36 * s, 70 * s * squash, 10 * s); ctx.fill();
-      if (state.sliding <= 0) { ctx.fillStyle = "#fdba74"; ctx.beginPath(); ctx.arc(p.x, p.y - lift - 70 * s - 12 * s, 13 * s, 0, Math.PI * 2); ctx.fill(); }
+      drawHero(ctx, p.x, p.y - lift, s, accent, { squash, bodyH: 70, bodyW: 36 });
     }
     drawParticles(ctx, state.particles);
     ctx.fillStyle = "#e2e8f0"; ctx.font = "700 16px system-ui"; ctx.textAlign = "left";

@@ -9,3 +9,8 @@
 Vercel is configured with `trailingSlash: false`, which serves
 `/external-games/<slug>` without a trailing slash and would 404 `../_shared`
 and `./game.js` relative URLs.
+
+- Control channel `motionplay.external-control.v1`:
+  - `type: "key"` — synthesize keydown/keyup
+  - `type: "pose"` — latest pose snapshot (`mini.js`)
+  - `type: "control"` + `action: "stop"|"pause"|"resume"` — release held keys and pause sticky embeds

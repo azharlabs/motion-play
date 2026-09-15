@@ -1,6 +1,6 @@
 /** Kart Racer — lean to steer. MotionPlay original. */
 (() => {
-  const { qs, readConfig, resizeCanvas, createHud, setOverlay, loadBest, saveBest, burst, stepParticles, drawParticles, roundRect, installPoseListener } = MPMini;
+  const { qs, readConfig, resizeCanvas, createHud, setOverlay, loadBest, saveBest, burst, stepParticles, drawParticles, roundRect, installPoseListener, bindParentStop, fillSky, drawStars, drawGlow, drawCoin, drawHero, drawHills } = MPMini;
   installPoseListener();
   const cfg = readConfig();
   const title = cfg.title || "Kart Racer";
@@ -9,6 +9,7 @@
   const KEY = "motionplay.kart-racer.best." + (cfg.skin || "default");
   let BEST = loadBest(KEY);
   const state = { mode: "ready", x: 0.5, vx: 0, dist: 0, score: 0, speed: 1, spawn: 0.8, things: [], particles: [], hits: 0, last: 0, steer: 0 };
+  bindParentStop(state, hud);
 
   function start() {
     Object.assign(state, { mode: "play", x: 0.5, vx: 0, dist: 0, score: 0, speed: 1, spawn: 0.8, things: [], particles: [], hits: 0, steer: 0 });
@@ -21,13 +22,13 @@
   function onKey(e) {
     if (e.key === "ArrowLeft" || e.key === "a") state.steer = -1;
     else if (e.key === "ArrowRight" || e.key === "d") state.steer = 1;
-    else if (e.key === " " || e.key === "Enter") { if (state.mode === "ready" || state.mode === "over") start(); }
+    else if (e.key === " " || e.key === "Enter") { if (state.mode === "ready" || state.mode === "over") start(); else if (state.mode === "pause") { state.mode = "play"; setOverlay(hud, false); } }
   }
   function onUp(e) {
     if (["ArrowLeft","a","ArrowRight","d"].includes(e.key)) state.steer = 0;
   }
   window.addEventListener("keydown", onKey); window.addEventListener("keyup", onUp);
-  hud.overlay.addEventListener("click", () => { if (state.mode === "ready" || state.mode === "over") start(); });
+  hud.overlay.addEventListener("click", () => { if (state.mode === "ready" || state.mode === "over") start(); else if (state.mode === "pause") { state.mode = "play"; setOverlay(hud, false); } });
 
   function update(dt) {
     if (state.mode !== "play") return;
@@ -59,33 +60,54 @@
     hud.score.textContent = String(Math.floor(state.score));
   }
 
+
   function draw(w, h) {
-    const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, "#082f49"); g.addColorStop(0.35, "#0c4a6e"); g.addColorStop(1, "#022c22");
-    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    const t = state.dist || 0;
+    fillSky(ctx, w, h, "#082f49", "#0c4a6e", "#022c22");
+    drawStars(ctx, w, h, 30, 7, t * 15);
+    drawHills(ctx, w, h, h * 0.36, "rgba(6,78,59,0.85)", 0.4, t * 0.015);
     const horizon = h * 0.32, cx = w * 0.5;
-    ctx.fillStyle = "#334155";
+    ctx.fillStyle = "#475569";
     ctx.beginPath(); ctx.moveTo(cx - w * 0.08, horizon); ctx.lineTo(cx + w * 0.08, horizon); ctx.lineTo(cx + w * 0.48, h); ctx.lineTo(cx - w * 0.48, h); ctx.closePath(); ctx.fill();
-    // center line
-    const scroll = (state.dist * 0.05) % 1;
+    // curb stripes
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(cx - w * 0.08, horizon); ctx.lineTo(cx + w * 0.08, horizon); ctx.lineTo(cx + w * 0.48, h); ctx.lineTo(cx - w * 0.48, h); ctx.closePath(); ctx.clip();
+    const scroll = (t * 0.05) % 1;
+    for (let i = 0; i < 16; i++) {
+      const u = (i / 16 + scroll) % 1; const y = horizon + u * u * (h - horizon);
+      const half = w * (0.08 + 0.4 * u * u);
+      ctx.fillStyle = i % 2 ? "#f8fafc" : "#ef4444";
+      ctx.fillRect(cx - half - 8, y, 8, 10 + u * 16);
+      ctx.fillRect(cx + half, y, 8, 10 + u * 16);
+    }
     ctx.strokeStyle = "rgba(248,250,252,0.55)"; ctx.lineWidth = 4;
     for (let i = 0; i < 12; i++) {
-      const t = (i / 12 + scroll) % 1; const y = horizon + t * t * (h - horizon);
-      ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(cx, y + 12 + t * 20); ctx.stroke();
+      const u = (i / 12 + scroll) % 1; const y = horizon + u * u * (h - horizon);
+      ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(cx, y + 12 + u * 20); ctx.stroke();
     }
-    for (const t of [...state.things].sort((a,b)=>b.z-a.z)) {
-      const ease = Math.max(0, Math.min(1, 1 - t.z)) ** 2;
+    ctx.restore();
+    for (const th of [...state.things].sort((a,b)=>b.z-a.z)) {
+      const ease = Math.max(0, Math.min(1, 1 - th.z)) ** 2;
       const roadHalf = w * (0.08 + 0.4 * ease);
-      const x = cx + (t.x - 0.5) * roadHalf * 2;
+      const x = cx + (th.x - 0.5) * roadHalf * 2;
       const y = horizon + ease * (h - horizon);
       const s = 0.3 + ease * 1.1;
-      if (t.kind === "coin") { ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(x, y - 10*s, 12*s, 0, Math.PI*2); ctx.fill(); }
-      else { ctx.fillStyle = "#f97316"; roundRect(ctx, x - 10*s, y - 28*s, 20*s, 28*s, 4*s); ctx.fill(); }
+      if (th.kind === "coin") drawCoin(ctx, x, y - 10*s, 12*s, t * 40);
+      else {
+        drawGlow(ctx, x, y - 14*s, 26*s, "rgba(249,115,22,0.45)");
+        ctx.fillStyle = "#f97316"; roundRect(ctx, x - 10*s, y - 28*s, 20*s, 28*s, 4*s); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(x, y - 24*s); ctx.lineTo(x - 7*s, y - 4*s); ctx.lineTo(x + 7*s, y - 4*s); ctx.closePath(); ctx.fill();
+      }
     }
     const kx = cx + (state.x - 0.5) * w * 0.75;
     const ky = h * 0.78;
+    // kart body
+    ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.beginPath(); ctx.ellipse(kx, ky + 16, 34, 10, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#0f172a"; roundRect(ctx, kx - 30, ky + 4, 18, 12, 4); ctx.fill(); roundRect(ctx, kx + 12, ky + 4, 18, 12, 4); ctx.fill();
     ctx.fillStyle = accent; roundRect(ctx, kx - 28, ky - 22, 56, 36, 10); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.2)"; roundRect(ctx, kx - 18, ky - 14, 36, 12, 6); ctx.fill();
     ctx.fillStyle = "#0f172a"; roundRect(ctx, kx - 18, ky - 34, 36, 16, 6); ctx.fill();
+    drawGlow(ctx, kx, ky - 8, 50, "rgba(56,189,248,0.25)", 0.35);
     drawParticles(ctx, state.particles);
     ctx.fillStyle = "#e2e8f0"; ctx.font = "700 16px system-ui"; ctx.textAlign = "left";
     const lives = Math.max(0, 3 - state.hits);

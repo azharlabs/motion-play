@@ -1,6 +1,6 @@
 /** Hold Pose — hold still / match cue. MotionPlay original. */
 (() => {
-  const { qs, readConfig, resizeCanvas, createHud, setOverlay, loadBest, saveBest, burst, stepParticles, drawParticles, latestPose, installPoseListener, roundRect } = MPMini;
+  const { qs, readConfig, resizeCanvas, createHud, setOverlay, loadBest, saveBest, burst, stepParticles, drawParticles, latestPose, installPoseListener, bindParentStop, fillSky, drawStars, drawGlow, drawCoin, drawHero, drawHills, roundRect } = MPMini;
   installPoseListener();
   const cfg = readConfig();
   const skin = cfg.skin || "dance";
@@ -17,6 +17,7 @@
     { id: "STILL", label: "Freeze!", check: (p) => Math.abs(p.lean ?? 0) < 0.2 && !moving(p) },
   ];
   const state = { mode: "ready", score: 0, misses: 0, target: null, hold: 0, need: 0.85, phase: "move", timer: 0, particles: [], last: 0, green: true };
+  bindParentStop(state, hud);
 
   function armsOut(p) {
     const L = p.hands?.left, R = p.hands?.right;
@@ -49,9 +50,9 @@
     state.hold = 0; state.timer = 3.2; state.phase = "hold";
   }
   window.addEventListener("keydown", (e) => {
-    if (e.key === " " || e.key === "Enter") { if (state.mode === "ready" || state.mode === "over") start(); }
+    if (e.key === " " || e.key === "Enter") { if (state.mode === "ready" || state.mode === "over") start(); else if (state.mode === "pause") { state.mode = "play"; setOverlay(hud, false); } }
   });
-  hud.overlay.addEventListener("click", () => { if (state.mode === "ready" || state.mode === "over") start(); });
+  hud.overlay.addEventListener("click", () => { if (state.mode === "ready" || state.mode === "over") start(); else if (state.mode === "pause") { state.mode = "play"; setOverlay(hud, false); } });
 
   // Keyboard simulate pose holds via arrow keys held
   const held = new Set();
@@ -100,18 +101,34 @@
     hud.score.textContent = String(state.score);
   }
 
+
   function draw(w, h) {
-    ctx.fillStyle = state.green ? "#1e293b" : "#450a0a"; ctx.fillRect(0, 0, w, h);
-    roundRect(ctx, w * 0.15, h * 0.22, w * 0.7, h * 0.4, 24);
-    ctx.fillStyle = state.green ? "#334155" : "#7f1d1d"; ctx.fill();
+    const t = performance.now();
+    if (state.green) fillSky(ctx, w, h, "#0f766e", "#1e293b", "#0f172a");
+    else fillSky(ctx, w, h, "#7f1d1d", "#450a0a", "#1c1917");
+    drawStars(ctx, w, h, 24, state.green ? 2 : 9, t);
+    drawGlow(ctx, w * 0.5, h * 0.4, w * 0.4, state.green ? "rgba(234,179,8,0.2)" : "rgba(239,68,68,0.25)", 0.55);
+    // stage platform
+    ctx.fillStyle = "rgba(15,23,42,0.55)";
+    roundRect(ctx, w * 0.12, h * 0.18, w * 0.76, h * 0.48, 28); ctx.fill();
+    ctx.strokeStyle = state.green ? "rgba(45,212,191,0.5)" : "rgba(252,165,165,0.45)";
+    ctx.lineWidth = 3; ctx.stroke();
+    // silhouette figure
+    const figX = w * 0.5, figY = h * 0.52;
+    ctx.fillStyle = "rgba(248,250,252,0.12)";
+    roundRect(ctx, figX - 18, figY - 50, 36, 55, 12); ctx.fill();
+    ctx.beginPath(); ctx.arc(figX, figY - 62, 14, 0, Math.PI * 2); ctx.fill();
+    const label = state.target ? state.target.label : "…";
     ctx.fillStyle = "#f8fafc"; ctx.font = "bold 28px system-ui"; ctx.textAlign = "center";
-    ctx.fillText(state.target ? state.target.label : "…", w * 0.5, h * 0.42);
-    ctx.font = "16px system-ui"; ctx.fillStyle = accent;
-    ctx.fillText(skin === "simon" ? (state.green ? "MOVE" : "FREEZE") : "HOLD", w * 0.5, h * 0.52);
-    // progress
+    ctx.fillText(label, w * 0.5, h * 0.36);
+    ctx.font = "800 16px system-ui"; ctx.fillStyle = accent;
+    ctx.fillText(skin === "simon" ? (state.green ? "MOVE" : "FREEZE") : "HOLD", w * 0.5, h * 0.44);
     const pw = w * 0.5, ph = 14;
     ctx.fillStyle = "#0f172a"; roundRect(ctx, w * 0.25, h * 0.7, pw, ph, 8); ctx.fill();
-    ctx.fillStyle = accent; roundRect(ctx, w * 0.25, h * 0.7, pw * Math.min(1, state.hold / state.need), ph, 8); ctx.fill();
+    const prog = Math.min(1, state.hold / state.need);
+    drawGlow(ctx, w * 0.25 + pw * prog * 0.5, h * 0.7 + 7, 28, accent, 0.35);
+    ctx.fillStyle = accent; roundRect(ctx, w * 0.25, h * 0.7, pw * prog, ph, 8); ctx.fill();
+    // confetti-ish particles already
     drawParticles(ctx, state.particles);
     ctx.fillStyle = "#e2e8f0"; ctx.font = "700 16px system-ui"; ctx.textAlign = "left";
     ctx.fillText("Miss " + state.misses + "/4", 14, 28);

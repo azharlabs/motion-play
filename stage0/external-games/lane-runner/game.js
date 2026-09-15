@@ -4,6 +4,7 @@
  */
 (() => {
   const cfg = (window.MPMini && MPMini.readConfig()) || {};
+  const bindParentStop = window.MPMini && MPMini.bindParentStop;
   const gameTitle = cfg.title || "Lane Runner";
   const accent = cfg.accent || "#f97316";
   const canvas = document.getElementById("game");
@@ -40,6 +41,11 @@
     nextId: 1,
     last: 0,
   };
+
+  if (bindParentStop) bindParentStop(state, () => {
+    setOverlay(true, "Paused", "Stopped from MotionPlay · tap or Space to continue");
+    hudStatus.textContent = "Paused";
+  });
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -346,6 +352,26 @@
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, w, horizon + 40);
 
+    // Twinkle field
+    ctx.fillStyle = "rgba(255,255,255,0.65)";
+    for (let i = 0; i < 28; i++) {
+      const x = ((i * 97) % 1000) / 1000 * w;
+      const y = ((i * 53) % 1000) / 1000 * horizon;
+      ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(state.distance * 0.02 + i));
+      ctx.fillRect(x, y, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+
+    // Far hills
+    ctx.fillStyle = "rgba(15,23,42,0.85)";
+    ctx.beginPath(); ctx.moveTo(0, horizon);
+    for (let i = 0; i <= 6; i++) {
+      const x = (i / 6) * w;
+      const y = horizon - 18 - Math.sin(i * 1.7 + state.distance * 0.01) * 12;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(w, horizon); ctx.closePath(); ctx.fill();
+
     // Perspective road trapezoid
     const topW = w * 0.16;
     const botW = w * 0.92;
@@ -421,13 +447,20 @@
       const p = project(thing.lane, thing.z, w, h);
       const s = p.scale;
       if (thing.kind === "coin") {
+        const cx = p.x, cy = p.y - 30 * s, r = 14 * s;
+        const glow = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r * 2);
+        glow.addColorStop(0, "rgba(251,191,36,0.55)");
+        glow.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(cx, cy, r * 2, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath();
         ctx.fillStyle = "#fbbf24";
-        ctx.arc(p.x, p.y - 30 * s, 14 * s, 0, Math.PI * 2);
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = "#f59e0b";
         ctx.lineWidth = 2;
         ctx.stroke();
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.beginPath(); ctx.arc(cx - r * 0.25, cy - r * 0.25, r * 0.28, 0, Math.PI * 2); ctx.fill();
         continue;
       }
 
