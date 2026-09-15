@@ -1117,7 +1117,7 @@ function goHome() {
 function launchStickyPlay() {
   if (!entry?.id) return;
   fx.cue("ui");
-  location.href = `./play.html?card=${encodeURIComponent(entry.id)}`;
+  location.href = `./controller.html?card=${encodeURIComponent(entry.id)}`;
 }
 
 els.btnHowtoPlay.addEventListener("click", () => {
