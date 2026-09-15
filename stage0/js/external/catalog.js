@@ -139,4 +139,20 @@ export function embedUrl(cardId) {
   return `./external-games/${entry.slug}/${q ? `?${q}` : ""}`;
 }
 
+/** Controller title-grid keep list (product library). Others stay in EMBED_CATALOG for deep links. */
+export const LIBRARY_CARD_IDS = [
+  "jump-the-wall", // Motion Runner
+  "lane-runner", // Ninja Dodge
+  "ski-slalom", // Kart Racer
+  "fruit-slice", // Fruit Slice
+  "balloon-pop", // Balloon Pop Adventure
+  "punch-out", // Boxing Challenge
+  "freeze-frame", // Simon Says Motion
+  "goalkeeper", // Goalkeeper Hero
+];
+
+export function isLibraryCard(cardId) {
+  return LIBRARY_CARD_IDS.includes(cardId);
+}
+
 export const CATALOG_CARD_IDS = Object.keys(EMBED_CATALOG);
