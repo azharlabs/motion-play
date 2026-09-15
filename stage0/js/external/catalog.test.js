@@ -22,3 +22,23 @@ describe("sticky embed catalog", () => {
     }
   });
 });
+
+describe("sticky embed HTML asset URLs", () => {
+  it("uses root-absolute script/css paths so Vercel no-slash URLs still load", async () => {
+    const { readdir, readFile } = await import("node:fs/promises");
+    const { join } = await import("node:path");
+    const root = join(process.cwd(), "stage0/external-games");
+    const slugs = (await readdir(root, { withFileTypes: true }))
+      .filter((d) => d.isDirectory() && !d.name.startsWith("_"))
+      .map((d) => d.name);
+    assert.ok(slugs.length >= 9);
+    for (const slug of slugs) {
+      const html = await readFile(join(root, slug, "index.html"), "utf8");
+      assert.match(html, /href="\/external-games\/_shared\/shell\.css"/);
+      assert.match(html, /src="\/external-games\/_shared\/mini\.js"/);
+      assert.match(html, new RegExp(`src="/external-games/${slug}/game\\.js"`));
+      assert.match(html, /Tap or press Space to start/);
+      assert.doesNotMatch(html, />Loading…</);
+    }
+  });
+});

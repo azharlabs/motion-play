@@ -4,7 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1" />
   <title>MotionPlay — Hold Pose</title>
-  <link rel="stylesheet" href="../_shared/shell.css" />
+  <!-- Root-absolute assets: Vercel trailingSlash=false serves /slug without a
+       trailing slash, which breaks ../ and ./ relative URLs in the embed. -->
+  <base href="/external-games/hold-pose/" />
+  <link rel="stylesheet" href="/external-games/_shared/shell.css" />
   <style>:root { --accent: #eab308; }</style>
 </head>
 <body>
@@ -12,18 +15,18 @@
     <canvas id="game" aria-label="Hold Pose"></canvas>
     <div id="chrome">
       <div class="pill">Score <span id="score">0</span></div>
-      <div id="status">Waiting for MotionPlay…</div>
+      <div id="status">Tap / keys ready</div>
       <div class="pill">Best <span id="best">0</span></div>
     </div>
     <div id="overlay">
       <div id="overlay-card">
         <h1 id="overlay-title">Hold Pose</h1>
-        <p id="overlay-body">Loading…</p>
+        <p id="overlay-body">Tap or press Space to start · keyboard works without camera</p>
       </div>
     </div>
   </div>
-  <script src="../_shared/key-bridge.js"></script>
-  <script src="../_shared/mini.js"></script>
-  <script src="./game.js"></script>
+  <script src="/external-games/_shared/key-bridge.js"></script>
+  <script src="/external-games/_shared/mini.js"></script>
+  <script src="/external-games/hold-pose/game.js"></script>
 </body>
 </html>
