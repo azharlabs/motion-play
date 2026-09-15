@@ -26,9 +26,9 @@ The current product catalogue contains 15 experiences built on the existing Stag
 
 The stable internal Stage 0 game IDs are temporarily retained so existing personal bests, activity history, artwork, tests and lazy-loaded engine modules remain compatible during the migration.
 
-## Primary path: skill grid → sticky embeds
+## Primary path: controller hub → sticky embeds
 
-The default Stage 0 entry (`stage0/index.html`) is the **skill grid + howto** home. Each card’s **Play** button opens `play.html?card=<id>`, which embeds a MotionPlay-built sticky mini-game under `stage0/external-games/` and drives it with pose → key/pose bridge (same-origin iframe, no extension required on phone).
+The default Stage 0 entry redirects to `stage0/controller.html`, a **MotionPlay-themed controller shell** that lists all 15 sticky titles. Picking a title opens the same shell’s play chrome (`controller.html?card=<id>` or `play.html?card=<id>`), which embeds a MotionPlay-built mini-game under `stage0/external-games/` and drives it with pose → key/pose bridge (same-origin iframe, no extension required on phone).
 
 Action families covered by dedicated embeds (remaining cards reuse the closest family with a distinct skin/title):
 
@@ -40,13 +40,15 @@ Action families covered by dedicated embeds (remaining cards reuse the closest f
 - Raise: `raise-flap`
 - Squat / lean platformer: `squat-island`
 
-The original thin Stage 0 arcade engines remain available as **legacy** mode: open `/?legacy=1` (or `index.html?legacy=1`). `controller.html` stays available as a direct Lane Runner entry.
+Legacy Stage 0 canvas arcade engines are **not** mixed into the controller hub. They remain available only behind an explicit deep link: `/?legacy=1` (or `index.html?legacy=1`).
+
+Play chrome (`controller.html` / `play.html`) and embed shells share MotionPlay CSS tokens (teal / orange, Nunito, cards, buttons) via `css/play-chrome.css` and `external-games/_shared/shell.css`.
 
 ## External game controller mode
 
 MotionPlay can also act only as the motion engine while an existing browser game supplies the visuals and gameplay.
 
-Open `stage0/controller.html`, choose a profile, calibrate the camera, and MotionPlay converts pose signals into a standard control stream. Same-origin games (like the vendored Lane Runner) receive keys through the iframe bridge. The companion Chrome/Edge extension in `companion/chrome-extension/` remains a secondary path that relays the same stream into another tab the player explicitly arms.
+Open `stage0/controller.html`, pick a sticky title (or pass `?card=`), calibrate the camera, and MotionPlay converts pose signals into a standard control stream. Same-origin games receive keys through the iframe bridge. The companion Chrome/Edge extension in `companion/chrome-extension/` remains a secondary path that relays the same stream into another tab the player explicitly arms.
 
 Current profiles:
 

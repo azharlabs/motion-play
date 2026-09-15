@@ -3,77 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1" />
+  <meta name="theme-color" content="#0d2a26" />
   <title>MotionPlay — Play</title>
-  <style>
-    :root { color-scheme: dark; font-family: Inter, ui-rounded, system-ui, sans-serif; }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; height: 100%; background: #08111f; color: #f8fafc; overflow: hidden; }
-    #app {
-      height: 100%; display: grid;
-      grid-template-rows: auto minmax(0, 1fr) auto;
-      gap: 0;
-    }
-    header {
-      display: flex; gap: 10px; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid #1f2a3d;
-      background: #0b1524;
-    }
-    header h1 { margin: 0; font-size: clamp(16px, 3.6vw, 22px); }
-    header .links { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-    header a { color: #93c5fd; font-size: 13px; }
-    .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    select, button { font: inherit; border-radius: 12px; border: 1px solid #3a4b63; padding: 10px 12px; }
-    select { background: #0b1524; color: #fff; }
-    button { background: #f97316; color: #111827; font-weight: 800; cursor: pointer; }
-    button:disabled { opacity: .45; cursor: default; }
-    #stop { background: #cbd5e1; }
-    #stage {
-      min-height: 0; display: grid;
-      grid-template-columns: minmax(140px, 32%) minmax(0, 1fr);
-      gap: 0;
-    }
-    @media (max-width: 820px), (orientation: portrait) {
-      #stage { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) 148px; }
-      #camera-pane { order: 2; }
-      #game-pane { order: 1; }
-    }
-    #game-pane, #camera-pane { min-height: 0; position: relative; background: #020617; }
-    #game-pane { border-left: 1px solid #1f2a3d; }
-    @media (max-width: 820px), (orientation: portrait) {
-      #game-pane { border-left: 0; border-bottom: 1px solid #1f2a3d; }
-    }
-    #game-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #020617; }
-    .camera { position: absolute; inset: 0; overflow: hidden; background: #020617; }
-    video, canvas.overlay { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-    canvas.overlay { pointer-events: none; }
-    #status {
-      padding: 8px 14px; font-size: 13px; background: #0b1524; border-top: 1px solid #1f2a3d;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    #status[data-mode="live"] { box-shadow: inset 0 0 0 2px #22c55e; }
-    #status[data-mode="error"] { box-shadow: inset 0 0 0 2px #ef4444; }
-    #counts { display: none; }
-    .fine {
-      font-size: 11px; color: #94a3b8; padding: 0 14px 8px; background: #0b1524;
-    }
-  </style>
+  <link rel="stylesheet" href="./css/play-chrome.css" />
 </head>
 <body>
-  <div id="app">
-    <header>
+  <div id="play-shell">
+    <header class="play-head">
       <div>
-        <h1 id="game-title">MotionPlay</h1>
+        <h1 id="game-title">Motion<span>Play</span></h1>
       </div>
       <div class="controls">
-        <label for="profile" class="sr-only" style="position:absolute;left:-9999px">Profile</label>
+        <label for="profile" class="sr-only">Profile</label>
         <select id="profile" title="Control profile"></select>
         <button id="start" type="button">Start</button>
         <button id="stop" type="button" disabled>Stop</button>
       </div>
       <div class="links">
-        <a id="back-home" href="./">Skill grid</a>
+        <a id="back-home" href="./controller.html">All games</a>
         <a href="./index.html?legacy=1">Legacy arcade</a>
-        <a href="./controller.html">Controller</a>
       </div>
     </header>
 
@@ -95,7 +43,7 @@
     </div>
 
     <div id="status">Press Start, step back so your body is visible, then move to play.</div>
-    <div class="fine">Same-origin iframe + key/pose bridge (no extension required). Camera stays on-device.</div>
+    <div class="fine play-fine">Same-origin iframe + key/pose bridge. Camera stays on-device.</div>
     <div id="counts" aria-hidden="true"></div>
   </div>
   <script type="module" src="./js/external/controller-main.js"></script>

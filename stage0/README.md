@@ -1,6 +1,10 @@
 # Stage 0
 
-Default home is the skill grid (`index.html`). **Play** launches sticky embeds via `play.html?card=<id>`. Legacy arcade: `index.html?legacy=1`. Direct runner shell: `controller.html`.
+**Primary path:** `controller.html` lists and launches the 15 sticky MotionPlay embeds. Default `/` redirects there.
+
+**Legacy arcade** (original Stage 0 canvas engines under `js/games/`): `index.html?legacy=1` only — not mixed into the controller hub.
+
+**Play session:** `controller.html?card=<id>` or `play.html?card=<id>` — camera + iframe chrome themed with MotionPlay tokens (`css/play-chrome.css`).
 
 # MotionPlay Stage 0 — Jump the Wall
 
@@ -22,15 +26,11 @@ Open [http://localhost:5173](http://localhost:5173) and allow the camera.
 
 ## Play
 
-1. Stand so your **whole body** is in frame.
-2. Hold still ~1.5 s while it measures your floor line, standing height and torso length.
-3. **Jump** over stone walls. **Duck** under hanging branches.
-4. Three lives, brief invulnerability after a hit, and the pace ramps up as the round goes on.
-5. Clear five in a row for combo bonus points.
+1. Open the controller hub and pick a sticky title.
+2. Press **Start**, stand so your body is in frame, and hold still while it calibrates.
+3. Move according to the title’s hint (lean, jump, reach, punch, hold, …).
 
-Round length (1/3/5 min) is selectable on the start screen.
-
-Backup keys: `Arrow Up` jump, `Arrow Down` duck, `D` skeleton overlay.
+Backup keys still work inside many embeds: arrow keys / space.
 
 ## How detection works
 
@@ -59,6 +59,10 @@ Healthy: **GPU, 15–35 ms**. If it says CPU with 80 ms+, the browser is not usi
 
 | File | Responsibility |
 |------|----------------|
+| `controller.html` | Primary hub + play shell for sticky titles |
+| `play.html` | Deep-link play shell (same chrome) |
+| `css/play-chrome.css` | Shared MotionPlay chrome tokens |
+| `js/external/catalog.js` | Maps registry card ids → embed slug + profile |
 | `js/camera.js` | `getUserMedia` and capture caps |
 | `js/pose.js` | MediaPipe Pose Landmarker setup, frame downscale |
 | `js/filters.js` | 1-Euro filter and median |
@@ -68,7 +72,7 @@ Healthy: **GPU, 15–35 ms**. If it says CPU with 80 ms+, the browser is not usi
 | `js/mascot.js` | Pip the fox, drawn procedurally |
 | `js/render.js` | Parallax scene, particles, HUD |
 | `js/overlay.js` | Debug skeleton and threshold lines |
-| `js/main.js` | Screen flow and the main loop |
+| `js/main.js` | Legacy arcade screen flow and main loop |
 
 ## Tests
 
@@ -76,13 +80,6 @@ Healthy: **GPU, 15–35 ms**. If it says CPU with 80 ms+, the browser is not usi
 npm test
 ```
 
-## What to record on a phone
+## Controller-first sticky titles
 
-- Device and browser
-- Average pose FPS from the rest screen after ~5 minutes
-- Whether jump/duck felt late
-- Heat and any throttling
-
-## Controller-first sticky title
-
-Default entry redirects to `controller.html`, which embeds `external-games/lane-runner/` (MotionPlay-built, arrow-key 3-lane runner) and drives it from pose via the runner profile. Open `index.html?legacy=1` for the older 15-game arcade.
+`/` → `controller.html` (15 sticky titles). Play chrome embeds `external-games/<slug>/` and drives them from pose. Open `index.html?legacy=1` for the older 15-game canvas arcade.
