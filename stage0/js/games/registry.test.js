@@ -7,8 +7,11 @@ import { BENEFIT_IDS } from "../wellness.js";
 const SKILL_IDS = SKILLS.map((skill) => skill.id);
 
 describe("MotionPlay active-play catalogue", () => {
-  it("contains exactly fifteen experiences", () => {
-    assert.equal(GAMES.length, 15);
+  it("contains the motion catalogue plus vendored arcade classics", () => {
+    assert.ok(GAMES.length >= 27, `expected expanded catalogue, got ${GAMES.length}`);
+    assert.ok(GAMES.some((g) => g.id === "balloon-pop"));
+    assert.ok(GAMES.some((g) => g.id === "arcade-snake"));
+    assert.ok(GAMES.some((g) => g.id === "arcade-tetris"));
   });
 
   it("has unique stable ids and unique product ids", () => {

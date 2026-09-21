@@ -1,0 +1,311 @@
+/* ============================================
+   GameBox — Shared Design System
+   All games import this for consistent styling.
+   ============================================ */
+
+/* --- CSS Custom Properties --- */
+:root {
+    --gb-bg: #0f1117;
+    --gb-surface: #1a1d2e;
+    --gb-border: #2d3148;
+    --gb-text: #e8eaed;
+    --gb-text-muted: #a0aec0;
+    --gb-accent: #38b2ac;
+    --gb-accent-hover: #2c9a94;
+    --gb-success: #48bb78;
+    --gb-danger: #f56565;
+    --gb-warning: #ecc94b;
+    --gb-font: 'Inter', sans-serif;
+    --gb-radius: 12px;
+    --gb-radius-sm: 8px;
+    --gb-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    --gb-transition: 0.2s ease;
+}
+
+/* --- Reset & Base --- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--gb-font);
+    color: var(--gb-text);
+    background: var(--gb-bg);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* --- Back Link --- */
+.back-link {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    color: var(--gb-text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--gb-border);
+    border-radius: var(--gb-radius-sm);
+    background: var(--gb-surface);
+    transition: all var(--gb-transition);
+    z-index: 100;
+}
+
+.back-link:hover {
+    color: var(--gb-accent);
+    border-color: var(--gb-accent);
+}
+
+/* --- Game Container Shell --- */
+.game-shell {
+    background: var(--gb-surface);
+    border: 1px solid var(--gb-border);
+    border-radius: var(--gb-radius);
+    padding: 2rem;
+    box-shadow: var(--gb-shadow);
+    max-width: 550px;
+    width: 90%;
+    text-align: center;
+}
+
+.game-shell h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 1.2rem;
+    color: var(--gb-text);
+}
+
+/* --- Shared Button Styles --- */
+.gb-btn {
+    display: inline-block;
+    padding: 0.5rem 1.4rem;
+    border: 2px solid var(--gb-accent);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--gb-accent);
+    font-family: var(--gb-font);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--gb-transition);
+}
+
+.gb-btn:hover {
+    background: var(--gb-accent);
+    color: var(--gb-bg);
+}
+
+.gb-btn.active,
+.gb-btn.selected {
+    background: var(--gb-accent);
+    color: var(--gb-bg);
+    border-color: var(--gb-accent);
+}
+
+.gb-btn-solid {
+    display: inline-block;
+    padding: 0.55rem 1.5rem;
+    border: none;
+    border-radius: var(--gb-radius-sm);
+    background: var(--gb-accent);
+    color: var(--gb-bg);
+    font-family: var(--gb-font);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--gb-transition);
+}
+
+.gb-btn-solid:hover {
+    background: var(--gb-accent-hover);
+}
+
+/* --- Scoreboard --- */
+.gb-scoreboard {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1.2rem;
+    font-size: 0.9rem;
+    color: var(--gb-text-muted);
+}
+
+.gb-scoreboard span {
+    font-weight: 700;
+    color: var(--gb-accent);
+}
+
+/* --- Difficulty / Mode Selector --- */
+.gb-selector {
+    display: flex;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-bottom: 1.2rem;
+    flex-wrap: wrap;
+}
+
+.gb-selector label {
+    font-size: 0.85rem;
+    color: var(--gb-text-muted);
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0.4rem;
+}
+
+/* --- Modal --- */
+.gb-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.65);
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+}
+
+.gb-modal-content {
+    background: var(--gb-surface);
+    border: 1px solid var(--gb-border);
+    border-radius: var(--gb-radius);
+    padding: 2rem;
+    text-align: center;
+    box-shadow: var(--gb-shadow);
+    max-width: 400px;
+    width: 90%;
+}
+
+.gb-modal-content h2 {
+    font-size: 1.4rem;
+    margin-bottom: 0.8rem;
+    color: var(--gb-accent);
+}
+
+.gb-modal-content p {
+    color: var(--gb-text-muted);
+    margin-bottom: 1.2rem;
+}
+
+.gb-modal .close {
+    color: var(--gb-text-muted);
+    float: right;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color var(--gb-transition);
+    line-height: 1;
+}
+
+.gb-modal .close:hover {
+    color: var(--gb-text);
+}
+
+/* --- Status Text --- */
+.gb-status {
+    font-size: 1rem;
+    color: var(--gb-text-muted);
+    margin: 0.8rem 0;
+}
+
+/* --- Utility --- */
+.text-center {
+    text-align: center;
+}
+
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+
+/* --- Responsive --- */
+@media (max-width: 600px) {
+    .game-shell {
+        padding: 1.2rem;
+        width: 95%;
+    }
+
+    .game-shell h1 {
+        font-size: 1.3rem;
+    }
+}
+
+/* --- Focus Visible (Accessibility) --- */
+:focus-visible {
+    outline: 2px solid var(--gb-accent);
+    outline-offset: 2px;
+}
+
+/* Hide focus ring for mouse/touch, show for keyboard */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* --- Skip Link (Accessibility) --- */
+.skip-link {
+    position: fixed;
+    top: -100%;
+    left: 1rem;
+    padding: 0.6rem 1.2rem;
+    background: var(--gb-accent);
+    color: var(--gb-bg);
+    font-weight: 600;
+    border-radius: var(--gb-radius-sm);
+    z-index: 300;
+    transition: top 0.2s;
+}
+
+.skip-link:focus {
+    top: 1rem;
+}
+
+/* --- Page Entry Animation --- */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.game-shell {
+    animation: fadeInUp 0.4s ease both;
+}
+
+/* --- Button Press Effect --- */
+.gb-btn:active,
+.gb-btn-solid:active {
+    transform: scale(0.96);
+}
+
+/* --- Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

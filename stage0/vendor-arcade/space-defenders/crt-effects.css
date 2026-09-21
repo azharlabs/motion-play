@@ -1,0 +1,275 @@
+/* ==========================================================================
+   Galaxy Arcade — CRT Shader Effects (Pure CSS)
+   Scanlines, vignette, barrel distortion, chromatic aberration,
+   phosphor glow, and flicker — all toggleable with a single class.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Custom Properties
+   -------------------------------------------------------------------------- */
+:root {
+  /* Scanline tuning */
+  --crt-scanline-opacity: 0.08;
+  --crt-scanline-width: 2px;
+  --crt-scanline-color: rgba(0, 0, 0, var(--crt-scanline-opacity));
+
+  /* Vignette tuning */
+  --crt-vignette-strength: 0.55;
+
+  /* Curvature */
+  --crt-curvature: 12px;
+
+  /* Chromatic aberration offset */
+  --crt-aberration: 0.8px;
+
+  /* Phosphor glow */
+  --crt-glow-color: rgba(0, 255, 200, 0.06);
+  --crt-glow-spread: 2px;
+
+  /* Flicker */
+  --crt-flicker-intensity: 0.03;
+}
+
+/* --------------------------------------------------------------------------
+   2. CRT Container
+   --------------------------------------------------------------------------
+   Apply `.crt` to the element wrapping the game canvas / screen content.
+   The element should have `position: relative` and `overflow: hidden`.
+   -------------------------------------------------------------------------- */
+.crt {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--crt-curvature);
+
+  /* Subtle screen curvature via box shadow on the inside edge */
+  box-shadow:
+    inset 0 0 60px rgba(0, 0, 0, 0.35),
+    inset 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   3. Scanlines — ::before
+   -------------------------------------------------------------------------- */
+.crt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent var(--crt-scanline-width),
+    var(--crt-scanline-color) var(--crt-scanline-width),
+    var(--crt-scanline-color) calc(var(--crt-scanline-width) * 2)
+  );
+  /* Avoid paint on every frame — promote to own layer */
+  will-change: opacity;
+}
+
+/* --------------------------------------------------------------------------
+   4. Vignette — ::after
+   -------------------------------------------------------------------------- */
+.crt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    rgba(0, 0, 0, var(--crt-vignette-strength)) 100%
+  );
+}
+
+/* --------------------------------------------------------------------------
+   5. Barrel Distortion (subtle, CSS-only)
+   --------------------------------------------------------------------------
+   True barrel distortion requires WebGL, but a very subtle effect can be
+   achieved with a slight scale + border-radius to curve edges.
+   -------------------------------------------------------------------------- */
+.crt > canvas,
+.crt > .crt-screen {
+  border-radius: calc(var(--crt-curvature) - 4px);
+  /* Slight outward scale on edges to hint at curvature */
+  transform: scale(1.005);
+  transform-origin: center center;
+}
+
+/* --------------------------------------------------------------------------
+   6. Chromatic Aberration
+   --------------------------------------------------------------------------
+   Simulated with offset text-shadows on text content and a subtle
+   colored shadow on the container edges. This avoids expensive filters.
+   -------------------------------------------------------------------------- */
+.crt .crt-aberration,
+.crt .crt-screen {
+  text-shadow:
+    calc(var(--crt-aberration) * -1) 0 rgba(255, 0, 0, 0.3),
+    var(--crt-aberration) 0 rgba(0, 100, 255, 0.3);
+}
+
+/* Edge-only aberration glow on the container */
+.crt {
+  box-shadow:
+    inset 0 0 60px rgba(0, 0, 0, 0.35),
+    inset 0 0 4px rgba(0, 0, 0, 0.5),
+    inset calc(var(--crt-aberration) * -1) 0 8px rgba(255, 0, 0, 0.03),
+    inset var(--crt-aberration) 0 8px rgba(0, 80, 255, 0.03);
+}
+
+/* --------------------------------------------------------------------------
+   7. Phosphor Glow
+   --------------------------------------------------------------------------
+   A faint colored glow that simulates phosphor illumination.
+   Applied via box-shadow to keep compositing cost low.
+   -------------------------------------------------------------------------- */
+.crt > canvas,
+.crt > .crt-screen {
+  box-shadow:
+    0 0 var(--crt-glow-spread) var(--crt-glow-color),
+    inset 0 0 var(--crt-glow-spread) var(--crt-glow-color);
+}
+
+/* Text-level phosphor glow */
+.crt .phosphor-text {
+  text-shadow:
+    0 0 3px currentColor,
+    0 0 8px var(--crt-glow-color);
+}
+
+/* --------------------------------------------------------------------------
+   8. CRT Flicker
+   --------------------------------------------------------------------------
+   Occasional brightness variation — use `.crt-flicker` alongside `.crt`
+   or on a child element.
+   -------------------------------------------------------------------------- */
+.crt-flicker {
+  animation: crt-flicker-anim 0.15s infinite;
+}
+
+@keyframes crt-flicker-anim {
+  0% {
+    opacity: 1;
+  }
+  5% {
+    opacity: calc(1 - var(--crt-flicker-intensity));
+  }
+  10% {
+    opacity: 1;
+  }
+  15% {
+    opacity: calc(1 - var(--crt-flicker-intensity) * 0.5);
+  }
+  20%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Slower, more dramatic flicker for "bad signal" effect */
+.crt-flicker-heavy {
+  --crt-flicker-intensity: 0.12;
+  animation: crt-flicker-heavy-anim 4s infinite;
+}
+
+@keyframes crt-flicker-heavy-anim {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  42% {
+    opacity: 1;
+  }
+  43% {
+    opacity: 0.88;
+  }
+  44% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  79% {
+    opacity: 0.92;
+  }
+  80% {
+    opacity: 0.87;
+  }
+  81% {
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   9. Screen Curvature — Additional Emphasis
+   --------------------------------------------------------------------------
+   A highlight sweep that simulates light reflecting off a curved glass.
+   -------------------------------------------------------------------------- */
+.crt .crt-reflection {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    transparent 35%,
+    transparent 100%
+  );
+  border-radius: var(--crt-curvature);
+}
+
+/* --------------------------------------------------------------------------
+   10. Toggle Off — .crt-off
+   --------------------------------------------------------------------------
+   Adding `.crt-off` to the `.crt` element disables all effects cleanly.
+   -------------------------------------------------------------------------- */
+.crt.crt-off {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.crt.crt-off::before,
+.crt.crt-off::after {
+  display: none;
+}
+
+.crt.crt-off > canvas,
+.crt.crt-off > .crt-screen {
+  border-radius: 0;
+  transform: none;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.crt.crt-off .crt-aberration,
+.crt.crt-off .crt-screen {
+  text-shadow: none;
+}
+
+.crt.crt-off .crt-reflection {
+  display: none;
+}
+
+.crt.crt-off.crt-flicker,
+.crt.crt-off .crt-flicker,
+.crt.crt-off.crt-flicker-heavy,
+.crt.crt-off .crt-flicker-heavy {
+  animation: none;
+}
+
+/* --------------------------------------------------------------------------
+   11. Performance Notes
+   --------------------------------------------------------------------------
+   - All overlay effects use `pointer-events: none` so they never intercept.
+   - Pseudo-elements are composited on their own layer via `will-change`
+     only where needed (scanlines) to avoid unnecessary GPU memory.
+   - No CSS `filter` properties are used (blur/brightness/contrast are
+     expensive when applied to animated content).
+   - Chromatic aberration uses box-shadow instead of filter, keeping
+     compositing cost minimal.
+   - The flicker animation is a simple opacity change — one of the
+     cheapest properties to animate (compositor-only).
+   -------------------------------------------------------------------------- */

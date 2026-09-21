@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node tools/serve.mjs",
-    "test": "node --test \"stage0/js/**/*.test.js\"",
+    "test": "node --test stage0/js/",
     "check:ui": "node tools/preview.mjs",
     "check:pose": "node tools/pose-smoke.mjs",
     "check:physics": "node tools/physics-audit.mjs",

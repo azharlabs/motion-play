@@ -6,23 +6,9 @@ MotionPlay is evolving from a collection of camera mini-games into an active-pla
 
 ## Active-play catalogue
 
-The current product catalogue contains 15 experiences built on the existing Stage 0 motion engines while dedicated mechanics and visuals are progressively upgraded:
+The controller library keeps the delight motion-8 (Balloon Pop, Fruit Slice, Boxing, and friends) and expands with vendored classic HTML5 arcade titles under `stage0/vendor-arcade/` (Snake, Breakout, Flappy, Whack-a-Mole, Tetris, Invaders, Asteroids, 2048, Pac-Chase, Highway Racer, Road Hopper, Galaxy Invaders, …). Attribution and licenses live in `stage0/vendor-arcade/ATTRIBUTION.md`.
 
-1. Motion Runner
-2. Fruit Slice
-3. Kart Racer
-4. Goalkeeper Hero
-5. Boxing Challenge
-6. Dance Copycat
-7. Jump Island
-8. Balloon Pop Adventure
-9. Ninja Dodge
-10. Animal Adventure
-11. Space Defender
-12. Treasure Catch
-13. Balance Bridge
-14. Adventure Climber
-15. Simon Says Motion
+Motion sticky embeds still cover the Stage 0 action families; classic arcade cards embed the vendored games with absolute `/vendor-arcade/...` paths and the same Pause/Exit + pose→key bridge.
 
 The stable internal Stage 0 game IDs are temporarily retained so existing personal bests, activity history, artwork, tests and lazy-loaded engine modules remain compatible during the migration.
 

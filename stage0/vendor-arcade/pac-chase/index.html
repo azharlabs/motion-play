@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="/vendor-arcade/pac-chase/" />
+  <link rel="stylesheet" href="/vendor-arcade/_shared/arcade-shell.css" />
+  <style>.game-nav,.story-link,.back-link{display:none!important;} .game-page{padding:0;} .game-container{margin:0 auto;} body{background:#000;overflow:hidden;}</style>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pac-Chase — Sal's Galaxy Zone Arcade</title>
+  <link rel="stylesheet" href="/vendor-arcade/pac-chase/game-common.css">
+  <link rel="stylesheet" href="/vendor-arcade/pac-chase/crt-effects.css">
+</head>
+<body>
+  <div class="game-page">
+    <nav class="game-nav">
+      <a href="#" class="back-link">Back to Arcade</a>
+      <h1 class="game-title">Pac-Chase</h1>
+      <a href="#" class="back-link story-link">Sal's Story</a>
+    </nav>
+    <div class="game-container">
+      <div class="game-hud">
+        <div class="score-display" id="hud-score">SCORE 00000000</div>
+        <div class="score-display" id="hud-level">LV 1</div>
+        <div class="score-display" id="hud-lives">&hearts;&hearts;&hearts;</div>
+      </div>
+      <div class="game-frame crt">
+        <div class="power-led"></div>
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+      </div>
+    </div>
+  </div>
+  <script src="/vendor-arcade/_shared/galaxy-lib/utils.js"></script>
+  <script src="/vendor-arcade/_shared/galaxy-lib/collision.js"></script>
+  <script src="/vendor-arcade/_shared/galaxy-lib/sprites.js"></script>
+  <script src="/vendor-arcade/_shared/galaxy-lib/audio.js"></script>
+  <script src="/vendor-arcade/_shared/galaxy-lib/input.js"></script>
+  <script src="/vendor-arcade/_shared/galaxy-lib/particles.js"></script>
+  <script src="/vendor-arcade/_shared/galaxy-lib/screen-effects.js"></script>
+  <script src="/vendor-arcade/_shared/galaxy-lib/transitions.js"></script>
+  <script src="/vendor-arcade/_shared/galaxy-lib/achievements.js"></script>
+  <script src="/vendor-arcade/_shared/galaxy-lib/engine.js"></script>
+  <script src="/vendor-arcade/pac-chase/game.js"></script>
+  <script src="/vendor-arcade/_shared/key-bridge.js"></script>
+</body>
+</html>
