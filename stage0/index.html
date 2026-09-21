@@ -41,8 +41,8 @@
     />
     <link rel="stylesheet" href="./css/app.css" />
     <script>
-      // Primary path: controller hub with 8 library titles + howto preview.
-      // Legacy Stage 0 arcade stays behind an explicit flag only (not linked in UI).
+      // Primary path: controller hub (motion embeds, arcade, classic canvas).
+      // ?legacy=1 stays here so Classic canvas cards can launch the old engines.
       (function () {
         try {
           var params = new URLSearchParams(location.search);
@@ -58,7 +58,7 @@
     <!-- ---------------- home ---------------- -->
     <section id="screen-home" class="screen scroll">
       <p class="fineprint" style="margin:0 0 8px">
-        <strong>Legacy arcade</strong> — original Stage 0 canvas engines (emergency deep link only).
+        <strong>Classic canvas</strong> — original Stage 0 engines. Quit returns to the library when you opened a card from there.
       </p>
       <header class="home-head">
         <canvas id="logo-mascot" width="120" height="120" aria-hidden="true"></canvas>

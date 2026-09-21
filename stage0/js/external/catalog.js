@@ -1,9 +1,14 @@
+import { CANVAS_ENGINE_IDS } from "../games/registry.js";
+
 /**
  * Maps skill-grid card ids to sticky MotionPlay embeds + control profiles.
  * Titles/productIds stay aligned with registry.js — this only chooses the play shell.
  *
  * `root: "vendor-arcade"` points at classic vendored HTML5 games under
  * stage0/vendor-arcade/. Default root is external-games (motion sticky embeds).
+ *
+ * The controller grid lists every catalog entry, plus the original canvas
+ * engines (`CANVAS_ENGINE_IDS`) as separate Classic cards.
  */
 export const EMBED_CATALOG = {
   "jump-the-wall": {
@@ -272,11 +277,10 @@ export function embedUrl(cardId) {
 }
 
 /**
- * Controller title-grid: delight keep-8 + expanded classic arcade library.
- * Non-library catalog ids remain available via deep links (?card=).
+ * Motion sticky embeds on the controller grid.
+ * Delight keep-8 stay first; the remaining catalog motion titles follow.
  */
-export const LIBRARY_CARD_IDS = [
-  // Delight keep-8 (motion sticky embeds)
+export const MOTION_LIBRARY_IDS = [
   "jump-the-wall", // Motion Runner
   "lane-runner", // Ninja Dodge
   "ski-slalom", // Kart Racer
@@ -285,7 +289,17 @@ export const LIBRARY_CARD_IDS = [
   "punch-out", // Boxing Challenge
   "freeze-frame", // Simon Says Motion
   "goalkeeper", // Goalkeeper Hero
-  // Classic arcade expansion
+  "squat-rush", // Jump Island
+  "pose-match", // Dance Copycat
+  "sky-flap", // Space Defender
+  "orbit-keeper", // Treasure Catch
+  "body-drums", // Animal Adventure
+  "hand-snake", // Balance Bridge
+  "hand-tetris", // Adventure Climber
+];
+
+/** Every vendored HTML5 arcade title, including Asteroid Blaster and Underrun. */
+export const ARCADE_LIBRARY_IDS = [
   "arcade-snake",
   "arcade-breakout",
   "arcade-flappy",
@@ -298,10 +312,85 @@ export const LIBRARY_CARD_IDS = [
   "arcade-pac",
   "arcade-frogger",
   "arcade-space",
+  "arcade-blaster",
+  "arcade-underrun",
 ];
 
+/** Embed catalog entries shown on the controller grid (motion + arcade). */
+export const LIBRARY_CARD_IDS = [...MOTION_LIBRARY_IDS, ...ARCADE_LIBRARY_IDS];
+
+/**
+ * Original canvas engines, with ids that do not collide with embed cards.
+ * Titles keep the product name plus "(Classic)" so they sit beside the embeds.
+ */
+export const LEGACY_LIBRARY_CARDS = CANVAS_ENGINE_IDS.map((engineId) => {
+  const embed = EMBED_CATALOG[engineId];
+  return {
+    id: `canvas-${engineId}`,
+    engineId,
+    title: `${embed.title} (Classic)`,
+    hint: `Original canvas · ${embed.hint}`,
+    needs: embed.needs,
+    accent: embed.params?.accent || "#0f9b8e",
+  };
+});
+
+export function legacyCard(cardId) {
+  return LEGACY_LIBRARY_CARDS.find((card) => card.id === cardId) ?? null;
+}
+
+/** Open the Stage 0 canvas engine. Camera starts on that page's Play tap. */
+export function legacyPlayUrl(engineId) {
+  const params = new URLSearchParams({
+    legacy: "1",
+    game: engineId,
+    from: "controller",
+  });
+  return `./index.html?${params.toString()}`;
+}
+
 export function isLibraryCard(cardId) {
-  return LIBRARY_CARD_IDS.includes(cardId);
+  return LIBRARY_CARD_IDS.includes(cardId) || Boolean(legacyCard(cardId));
 }
 
 export const CATALOG_CARD_IDS = Object.keys(EMBED_CATALOG);
+
+/** Unified card descriptor for the controller grid and preview. */
+export function libraryPresentation(cardId) {
+  const embed = catalogEntry(cardId);
+  if (embed) {
+    return {
+      kind: "embed",
+      id: cardId,
+      title: embed.title,
+      hint: embed.hint || "",
+      needs: embed.needs,
+      accent: embed.params?.accent || "#0f9b8e",
+      engineId: cardId,
+    };
+  }
+  const canvas = legacyCard(cardId);
+  if (!canvas) return null;
+  return { kind: "canvas", ...canvas };
+}
+
+export const LIBRARY_SECTIONS = [
+  {
+    id: "motion",
+    title: "Motion games",
+    blurb: "Sticky motion embeds. Some titles share a shell with a different skin.",
+    ids: MOTION_LIBRARY_IDS,
+  },
+  {
+    id: "arcade",
+    title: "Classic arcade",
+    blurb: "Vendored HTML5 games. Lean, jump, and keys drive the same bridge.",
+    ids: ARCADE_LIBRARY_IDS,
+  },
+  {
+    id: "canvas",
+    title: "Classic canvas",
+    blurb: "Original Stage 0 engines. Preview here, then Play opens the canvas game.",
+    ids: LEGACY_LIBRARY_CARDS.map((card) => card.id),
+  },
+];
