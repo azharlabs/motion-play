@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1" />
+  <title>MotionPlay — Breakout</title>
+  <base href="/vendor-arcade/breakout/" />
+  <link rel="stylesheet" href="/vendor-arcade/_shared/arcade-shell.css" />
+  <link rel="stylesheet" href="/vendor-arcade/breakout/common.css" />
+  <link rel="stylesheet" href="/vendor-arcade/breakout/style.css" />
+  <style>
+    body { background:#0b1220; overflow:auto; }
+    .back-link, .skip-link, .code-panel { display:none !important; }
+    .game-shell { max-width: 100%; }
+  </style>
+</head>
+<body>
+
+    
+    
+    <div class="game-shell breakout-shell" id="game">
+        <h1>Breakout</h1>
+        <div class="gb-scoreboard">
+            <div class="score-item"><span class="score-label">Score</span><span class="score-value" id="score">0</span></div>
+            <div class="score-item"><span class="score-label">Lives</span><span class="score-value" id="lives">3</span></div>
+            <div class="score-item"><span class="score-label">Best</span><span class="score-value" id="best">0</span></div>
+        </div>
+        <canvas id="canvas" width="480" height="400"></canvas>
+        <p class="control-hint">Move paddle with Mouse or Arrow Keys</p>
+        <button class="gb-btn gb-btn-solid" id="start-btn">Start</button>
+    </div>
+    
+    
+
+  <script src="/vendor-arcade/_shared/key-bridge.js"></script>
+  <script src="/vendor-arcade/breakout/script.js"></script>
+</body>
+</html>

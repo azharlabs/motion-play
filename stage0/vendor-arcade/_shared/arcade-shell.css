@@ -1,0 +1,34 @@
+/* Minimal MotionPlay arcade embed chrome */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0b1220;
+  color: #e2e8f0;
+  font-family: Nunito, system-ui, sans-serif;
+}
+.mp-arcade-wrap {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  gap: 8px;
+}
+.mp-arcade-wrap canvas {
+  max-width: 100%;
+  max-height: calc(100% - 48px);
+  border-radius: 12px;
+  background: #000;
+}
+.mp-arcade-hint {
+  font-size: 13px;
+  opacity: 0.75;
+  text-align: center;
+}
+.back-link, .skip-link { display: none !important; }

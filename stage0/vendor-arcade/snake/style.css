@@ -1,0 +1,14 @@
+/* Snake — Game Styles */
+canvas {
+    display: block;
+    margin: 0 auto;
+    border: 2px solid var(--gb-border);
+    border-radius: var(--gb-radius-sm);
+    background: #0a0c12;
+    max-width: 100%;
+}
+
+.control-hint {
+    font-size: 0.8rem;
+    color: var(--gb-text-muted);
+}

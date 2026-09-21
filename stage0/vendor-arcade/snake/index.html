@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1" />
+  <title>MotionPlay — Snake</title>
+  <base href="/vendor-arcade/snake/" />
+  <link rel="stylesheet" href="/vendor-arcade/_shared/arcade-shell.css" />
+  <link rel="stylesheet" href="/vendor-arcade/snake/common.css" />
+  <link rel="stylesheet" href="/vendor-arcade/snake/style.css" />
+  <style>
+    body { background:#0b1220; overflow:auto; }
+    .back-link, .skip-link, .code-panel { display:none !important; }
+    .game-shell { max-width: 100%; }
+  </style>
+</head>
+<body>
+
+    
+    <div class="game-shell">
+        <h1>Snake</h1>
+        <div id="difficulty-selector" class="gb-selector">
+            <button class="gb-btn active" data-speed="150">Easy</button>
+            <button class="gb-btn" data-speed="100">Medium</button>
+            <button class="gb-btn" data-speed="60">Hard</button>
+        </div>
+        <canvas id="game-canvas" width="400" height="400"></canvas>
+        <p id="score" class="gb-status mt-1">Score: 0</p>
+        <p id="high-score" class="gb-status">Best: 0</p>
+        <button id="start-btn" class="gb-btn-solid mt-2">Start Game</button>
+        <p class="control-hint mt-1">Use arrow keys or WASD to move</p>
+    </div>
+    
+    
+
+  <script src="/vendor-arcade/_shared/key-bridge.js"></script>
+  <script src="/vendor-arcade/snake/script.js"></script>
+</body>
+</html>

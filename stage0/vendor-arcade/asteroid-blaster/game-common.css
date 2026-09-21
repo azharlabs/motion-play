@@ -1,0 +1,541 @@
+/* ==========================================================================
+   Galaxy Arcade — Shared Game Page Styles
+   Common layout, HUD, touch controls, and CRT bezel for all game pages.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Custom Properties
+   -------------------------------------------------------------------------- */
+:root {
+  /* Bezel & frame */
+  --bezel-color: #1c1c24;
+  --bezel-highlight: #2a2a38;
+  --bezel-shadow: #0a0a10;
+  --bezel-radius: 18px;
+  --bezel-padding: 20px;
+
+  /* HUD */
+  --hud-bg: rgba(10, 10, 18, 0.9);
+  --hud-height: 48px;
+
+  /* Score display */
+  --led-color: var(--neon-green, #39ff14);
+  --led-dim: rgba(57, 255, 20, 0.15);
+
+  /* Touch controls */
+  --touch-btn-size: 60px;
+  --touch-dpad-size: 140px;
+  --touch-opacity: 0.6;
+  --touch-active-opacity: 0.9;
+
+  /* Overlay */
+  --overlay-bg: rgba(0, 0, 0, 0.82);
+
+  /* Power LED */
+  --power-led-size: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   1b. Base Reset (for game pages that don't load styles.css)
+   -------------------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0a0a0a;
+  color: #e0e0e8;
+  font-family: "Courier New", "Courier", monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+
+.game-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --------------------------------------------------------------------------
+   2. Game Navigation
+   -------------------------------------------------------------------------- */
+.game-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: var(--hud-bg);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.12);
+}
+
+.game-nav .back-link {
+  font-family: var(--font-display, monospace);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--neon-cyan, #0ff);
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.3);
+  transition: color 200ms ease, text-shadow 200ms ease;
+}
+
+.game-nav .back-link:hover {
+  color: #fff;
+  text-shadow: 0 0 10px var(--neon-cyan, #0ff);
+}
+
+.game-nav .story-link {
+  color: var(--neon-hotpink, #ff2d95);
+  text-shadow: 0 0 6px rgba(255, 45, 149, 0.3);
+}
+
+.game-nav .story-link:hover {
+  color: #fff;
+  text-shadow: 0 0 10px var(--neon-hotpink, #ff2d95);
+}
+
+.game-nav .game-title {
+  font-family: var(--font-display, monospace);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.25);
+}
+
+/* --------------------------------------------------------------------------
+   3. Game Container
+   -------------------------------------------------------------------------- */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   4. Game Frame — CRT Monitor Bezel
+   -------------------------------------------------------------------------- */
+.game-frame {
+  position: relative;
+  background: var(--bezel-color);
+  border-radius: var(--bezel-radius);
+  padding: var(--bezel-padding);
+
+  /* Bevel effect: layered box-shadows */
+  box-shadow:
+    /* Inner bevel highlight */
+    inset 1px 1px 0 var(--bezel-highlight),
+    inset -1px -1px 0 var(--bezel-shadow),
+    /* Outer raised edge */
+    2px 2px 0 var(--bezel-shadow),
+    -1px -1px 0 var(--bezel-highlight),
+    /* Depth shadow */
+    4px 6px 20px rgba(0, 0, 0, 0.6),
+    /* Subtle ambient glow */
+    0 0 40px rgba(0, 255, 255, 0.04);
+
+  /* Top bevel gradient stripe */
+  border-top: 2px solid var(--bezel-highlight);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid var(--bezel-shadow);
+  border-bottom: 2px solid var(--bezel-shadow);
+}
+
+/* Screen inset */
+.game-frame .screen-inset {
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  box-shadow:
+    inset 0 0 12px rgba(0, 0, 0, 0.8),
+    inset 0 0 2px 1px rgba(0, 0, 0, 0.9);
+}
+
+.game-frame canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* --------------------------------------------------------------------------
+   5. Power LED
+   -------------------------------------------------------------------------- */
+.power-led {
+  position: absolute;
+  bottom: 8px;
+  right: 16px;
+  width: var(--power-led-size);
+  height: var(--power-led-size);
+  border-radius: 50%;
+  background: var(--neon-green, #39ff14);
+  box-shadow:
+    0 0 4px var(--neon-green, #39ff14),
+    0 0 10px rgba(57, 255, 20, 0.4);
+  animation: led-blink 3s ease-in-out infinite;
+}
+
+@keyframes led-blink {
+  0%,
+  90%,
+  100% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 0.4;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. Game HUD (Score / Lives / Level)
+   -------------------------------------------------------------------------- */
+.game-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  height: var(--hud-height);
+  padding: 0 1rem;
+  margin-bottom: 0.5rem;
+  background: var(--hud-bg);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 255, 255, 0.08);
+}
+
+.game-hud .hud-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.game-hud .hud-label {
+  font-family: var(--font-display, monospace);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #666;
+}
+
+/* --------------------------------------------------------------------------
+   7. Score Display — LED Segment Style
+   -------------------------------------------------------------------------- */
+.score-display {
+  font-family: "Courier New", "Courier", monospace;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--led-color);
+  text-shadow:
+    0 0 4px var(--led-color),
+    0 0 12px var(--led-dim),
+    0 0 24px var(--led-dim);
+  min-width: 6ch;
+  text-align: right;
+
+  /* Faint "unlit" segments behind */
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 0.65em,
+      rgba(57, 255, 20, 0.03) 0.65em,
+      rgba(57, 255, 20, 0.03) 0.7em
+    );
+}
+
+.score-display.score-red {
+  --led-color: #ff3333;
+  --led-dim: rgba(255, 51, 51, 0.15);
+}
+
+.score-display.score-cyan {
+  --led-color: var(--neon-cyan, #0ff);
+  --led-dim: rgba(0, 255, 255, 0.15);
+}
+
+/* --------------------------------------------------------------------------
+   8. Touch Controls — Mobile Overlay
+   -------------------------------------------------------------------------- */
+.touch-controls {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.touch-controls > * {
+  pointer-events: auto;
+}
+
+/* D-Pad */
+.touch-dpad {
+  position: absolute;
+  bottom: 30px;
+  left: 24px;
+  width: var(--touch-dpad-size);
+  height: var(--touch-dpad-size);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(0, 255, 255, 0.2);
+  opacity: var(--touch-opacity);
+  touch-action: none;
+}
+
+/* Directional indicators */
+.touch-dpad::before,
+.touch-dpad::after {
+  content: "";
+  position: absolute;
+  background: rgba(0, 255, 255, 0.25);
+  border-radius: 2px;
+}
+
+/* Vertical bar (up/down) */
+.touch-dpad::before {
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 60%;
+}
+
+/* Horizontal bar (left/right) */
+.touch-dpad::after {
+  top: 50%;
+  left: 20%;
+  transform: translateY(-50%);
+  width: 60%;
+  height: 4px;
+}
+
+.touch-dpad:active {
+  opacity: var(--touch-active-opacity);
+  border-color: var(--neon-cyan, #0ff);
+  background: rgba(0, 255, 255, 0.1);
+}
+
+/* Action Buttons */
+.touch-btn {
+  position: absolute;
+  bottom: 50px;
+  width: var(--touch-btn-size);
+  height: var(--touch-btn-size);
+  border-radius: 50%;
+  border: 2px solid var(--neon-hotpink, #ff2d95);
+  background: rgba(255, 45, 149, 0.1);
+  color: var(--neon-hotpink, #ff2d95);
+  font-family: var(--font-display, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: var(--touch-opacity);
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 100ms ease, background 100ms ease;
+}
+
+.touch-btn:active {
+  opacity: var(--touch-active-opacity);
+  background: rgba(255, 45, 149, 0.3);
+  box-shadow: 0 0 14px rgba(255, 45, 149, 0.4);
+}
+
+.touch-btn-a {
+  right: 24px;
+}
+
+.touch-btn-b {
+  right: 100px;
+}
+
+/* Secondary style */
+.touch-btn.secondary {
+  border-color: var(--neon-cyan, #0ff);
+  background: rgba(0, 255, 255, 0.08);
+  color: var(--neon-cyan, #0ff);
+}
+
+.touch-btn.secondary:active {
+  background: rgba(0, 255, 255, 0.25);
+  box-shadow: 0 0 14px rgba(0, 255, 255, 0.4);
+}
+
+/* --------------------------------------------------------------------------
+   9. Pause Overlay
+   -------------------------------------------------------------------------- */
+.pause-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  background: var(--overlay-bg);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 250ms ease, visibility 250ms ease;
+}
+
+.pause-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.pause-overlay .pause-title {
+  font-family: var(--font-display, monospace);
+  font-size: 2rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--neon-yellow, #ffff00);
+  text-shadow:
+    0 0 8px var(--neon-yellow, #ffff00),
+    0 0 24px rgba(255, 255, 0, 0.3);
+  animation: glow-pulse 2s ease-in-out infinite alternate;
+}
+
+.pause-overlay .menu-option {
+  font-family: var(--font-display, monospace);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #c0c0d0;
+  padding: 0.6rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.pause-overlay .menu-option:hover {
+  color: var(--neon-cyan, #0ff);
+  border-color: var(--neon-cyan, #0ff);
+  background: rgba(0, 255, 255, 0.08);
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+}
+
+/* --------------------------------------------------------------------------
+   10. Hide Touch Controls on Non-Touch (Pointer) Devices
+   -------------------------------------------------------------------------- */
+@media (hover: hover) and (pointer: fine) {
+  .touch-controls {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   11. Responsive Canvas Scaling
+   -------------------------------------------------------------------------- */
+
+/* Small screens */
+@media (max-width: 480px) {
+  .game-container {
+    padding: 0.5rem;
+  }
+
+  .game-frame {
+    --bezel-padding: 10px;
+    --bezel-radius: 10px;
+    border-width: 1px;
+  }
+
+  .game-hud {
+    --hud-height: 38px;
+    padding: 0 0.6rem;
+  }
+
+  .game-hud .hud-label {
+    font-size: 0.55rem;
+  }
+
+  .score-display {
+    font-size: 1rem;
+  }
+
+  .game-nav .game-title {
+    font-size: 0.85rem;
+  }
+
+  .touch-dpad {
+    --touch-dpad-size: 110px;
+    bottom: 20px;
+    left: 16px;
+  }
+
+  .touch-btn {
+    --touch-btn-size: 50px;
+    bottom: 36px;
+    font-size: 0.65rem;
+  }
+
+  .touch-btn-a {
+    right: 16px;
+  }
+
+  .touch-btn-b {
+    right: 80px;
+  }
+}
+
+/* Tablets */
+@media (min-width: 481px) and (max-width: 768px) {
+  .game-container {
+    padding: 1rem;
+  }
+
+  .game-frame {
+    --bezel-padding: 16px;
+  }
+}
+
+/* Landscape mobile — shrink vertical space */
+@media (max-height: 500px) and (orientation: landscape) {
+  .game-nav {
+    padding: 0.4rem 1rem;
+  }
+
+  .game-hud {
+    --hud-height: 34px;
+    margin-bottom: 0.25rem;
+  }
+
+  .game-container {
+    padding: 0.25rem;
+  }
+
+  .game-frame {
+    --bezel-padding: 8px;
+  }
+
+  .touch-controls {
+    height: 140px;
+  }
+
+  .touch-dpad {
+    --touch-dpad-size: 100px;
+    bottom: 10px;
+  }
+
+  .touch-btn {
+    --touch-btn-size: 46px;
+    bottom: 24px;
+  }
+}

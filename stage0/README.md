@@ -83,3 +83,7 @@ npm test
 ## Controller-first sticky titles
 
 `/` → `controller.html` (8 library titles). Play chrome embeds `external-games/<slug>/` and drives them from pose. Open `index.html?legacy=1` for the older 15-game canvas arcade.
+
+## Vendored arcade
+
+Classic HTML5 games live in `vendor-arcade/` with licenses in `vendor-arcade/ATTRIBUTION.md`. The controller embeds them via absolute `/vendor-arcade/<slug>/` paths.

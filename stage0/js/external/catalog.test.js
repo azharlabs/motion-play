@@ -3,10 +3,12 @@ import assert from "node:assert/strict";
 import { EMBED_CATALOG, catalogEntry, embedUrl, CATALOG_CARD_IDS, LIBRARY_CARD_IDS, isLibraryCard } from "./catalog.js";
 import { GAMES } from "../games/registry.js";
 import { CONTROL_PROFILES } from "./profiles.js";
+import { readdir, readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 describe("sticky embed catalog", () => {
-  it("covers all 15 registry games", () => {
-    assert.equal(CATALOG_CARD_IDS.length, 15);
+  it("covers every registry game", () => {
+    assert.equal(CATALOG_CARD_IDS.length, GAMES.length);
     for (const game of GAMES) {
       assert.ok(catalogEntry(game.id), `missing catalog entry for ${game.id}`);
       assert.equal(catalogEntry(game.id).title, game.title);
@@ -18,15 +20,14 @@ describe("sticky embed catalog", () => {
       assert.ok(CONTROL_PROFILES[entry.profile], `${id} unknown profile ${entry.profile}`);
       assert.ok(entry.slug, `${id} missing slug`);
       const url = embedUrl(id);
-      assert.match(url, new RegExp(`/external-games/${entry.slug}/`));
+      const root = entry.root === "vendor-arcade" ? "vendor-arcade" : "external-games";
+      assert.match(url, new RegExp(`/${root}/${entry.slug}/`));
     }
   });
 });
 
 describe("sticky embed HTML asset URLs", () => {
   it("uses root-absolute script/css paths so Vercel no-slash URLs still load", async () => {
-    const { readdir, readFile } = await import("node:fs/promises");
-    const { join } = await import("node:path");
     const root = join(process.cwd(), "stage0/external-games");
     const slugs = (await readdir(root, { withFileTypes: true }))
       .filter((d) => d.isDirectory() && !d.name.startsWith("_"))
@@ -43,9 +44,28 @@ describe("sticky embed HTML asset URLs", () => {
   });
 });
 
+describe("vendored arcade HTML asset URLs", () => {
+  it("uses root-absolute /vendor-arcade paths and key-bridge", async () => {
+    const root = join(process.cwd(), "stage0/vendor-arcade");
+    const slugs = (await readdir(root, { withFileTypes: true }))
+      .filter((d) => d.isDirectory() && !d.name.startsWith("_"))
+      .map((d) => d.name);
+    assert.ok(slugs.length >= 12, `expected >=12 vendored titles, got ${slugs.length}`);
+    for (const slug of slugs) {
+      const html = await readFile(join(root, slug, "index.html"), "utf8");
+      assert.match(html, new RegExp(`base href="/vendor-arcade/${slug}/"`));
+      assert.match(html, /src="\/vendor-arcade\/_shared\/key-bridge\.js"/);
+      assert.doesNotMatch(html, /src="\.\.\//);
+    }
+    const attribution = await readFile(join(root, "ATTRIBUTION.md"), "utf8");
+    assert.match(attribution, /MIT/);
+    assert.match(attribution, /GameBox|susam\/invaders|javascript-tetris/);
+  });
+});
+
 describe("controller library keep list", () => {
-  it("shows only the 8 product titles on the title grid", () => {
-    assert.deepEqual(LIBRARY_CARD_IDS, [
+  it("keeps delight-8 and expands with classic arcade titles", () => {
+    const delight8 = [
       "jump-the-wall",
       "lane-runner",
       "ski-slalom",
@@ -54,22 +74,18 @@ describe("controller library keep list", () => {
       "punch-out",
       "freeze-frame",
       "goalkeeper",
-    ]);
-    assert.equal(LIBRARY_CARD_IDS.length, 8);
+    ];
+    for (const id of delight8) {
+      assert.ok(LIBRARY_CARD_IDS.includes(id), `delight title missing: ${id}`);
+    }
+    assert.ok(LIBRARY_CARD_IDS.length >= 18 && LIBRARY_CARD_IDS.length <= 22);
     for (const id of LIBRARY_CARD_IDS) {
       assert.ok(catalogEntry(id), `missing catalog entry for library card ${id}`);
       assert.equal(isLibraryCard(id), true);
     }
-    const hidden = [
-      "pose-match",
-      "squat-rush",
-      "body-drums",
-      "sky-flap",
-      "orbit-keeper",
-      "hand-snake",
-      "hand-tetris",
-    ];
-    for (const id of hidden) {
+    // Thin sticky embeds stay deep-linkable but off the primary grid
+    const hiddenSticky = ["pose-match", "squat-rush", "body-drums", "orbit-keeper", "hand-snake", "hand-tetris"];
+    for (const id of hiddenSticky) {
       assert.equal(isLibraryCard(id), false, `${id} should be hidden from library`);
       assert.ok(catalogEntry(id), `${id} stays in catalog for deep links`);
     }

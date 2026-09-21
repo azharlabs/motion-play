@@ -71,6 +71,14 @@ export const CONTROL_PROFILES = {
     autoAccelerate: false,
     sendPose: true,
   },
+  arcade: {
+    id: "arcade",
+    label: "Classic arcade",
+    description: "Lean left/right for arrows; jump fires Space. Keyboard always works.",
+    keys: { left: "ArrowLeft", right: "ArrowRight", jump: "Space", duck: "ArrowDown" },
+    autoAccelerate: false,
+    sendPose: false,
+  },
 };
 
 export const profileById = (id) => CONTROL_PROFILES[id] ?? CONTROL_PROFILES.runner;
