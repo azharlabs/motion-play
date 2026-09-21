@@ -1,8 +1,8 @@
 # Stage 0
 
-**Primary path:** `/` → `controller.html` (mascot + logo, 8 library titles, howto GIF/canvas preview, Play) → `?card=<id>` sticky embed session. No profile dropdown.
+**Primary path:** `/` → `controller.html` (mascot + logo, 44 library cards, howto GIF/canvas preview, Play). Motion and arcade cards open `?card=<id>`. Classic canvas cards open `index.html?legacy=1&game=<id>&from=controller`. No profile dropdown.
 
-**Legacy arcade** (original Stage 0 canvas engines under `js/games/`): `index.html?legacy=1` only — not linked from the primary UI.
+**Library count:** 15 motion embeds + 14 vendored arcade games + 15 original canvas engines = 44 cards. Those cover all 38 packages in the tree (9 embed shells, 14 arcade folders, 15 `js/games/` modules). Six motion cards share a shell with another title via a skin.
 
 **Play session:** `controller.html?card=<id>` or `play.html?card=<id>` — camera + iframe chrome themed with MotionPlay tokens (`css/play-chrome.css`).
 
@@ -82,7 +82,7 @@ npm test
 
 ## Controller-first sticky titles
 
-`/` → `controller.html` (8 library titles). Play chrome embeds `external-games/<slug>/` and drives them from pose. Open `index.html?legacy=1` for the older 15-game canvas arcade.
+`/` → `controller.html` (44 library cards). Play chrome embeds `external-games/<slug>/` or `vendor-arcade/<slug>/` and drives them from pose. Classic canvas cards launch the older engines and return to the library on Quit.
 
 ## Vendored arcade
 

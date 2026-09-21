@@ -6,15 +6,23 @@ MotionPlay is evolving from a collection of camera mini-games into an active-pla
 
 ## Active-play catalogue
 
-The controller library keeps the delight motion-8 (Balloon Pop, Fruit Slice, Boxing, and friends) and expands with vendored classic HTML5 arcade titles under `stage0/vendor-arcade/` (Snake, Breakout, Flappy, Whack-a-Mole, Tetris, Invaders, Asteroids, 2048, Pac-Chase, Highway Racer, Road Hopper, Galaxy Invaders, …). Attribution and licenses live in `stage0/vendor-arcade/ATTRIBUTION.md`.
+The controller library lists **44 playable cards**, covering every package already in the tree:
 
-Motion sticky embeds still cover the Stage 0 action families; classic arcade cards embed the vendored games with absolute `/vendor-arcade/...` paths and the same Pause/Exit + pose→key bridge.
+| Section | Cards | Packages |
+|---|---|---|
+| Motion games | 15 sticky embeds | 9 shells in `stage0/external-games/` (some shells are reused with a different skin and title) |
+| Classic arcade | 14 vendored HTML5 games | 14 folders in `stage0/vendor-arcade/` |
+| Classic canvas | 15 original engines | 15 modules in `stage0/js/games/` |
+
+That is 14 + 9 + 15 = **38 packages**, and 44 cards because six motion titles share a shell with a sibling. Delight titles stay first. Asteroid Blaster, Underrun, and the previously hidden motion titles (Jump Island, Dance Copycat, Space Defender, Treasure Catch, Animal Adventure, Balance Bridge, Adventure Climber) are on the grid. Classic canvas cards use a distinct “(Classic)” title and launch `index.html?legacy=1&game=<id>&from=controller`. Quit on that page returns to the library. Embed and arcade cards keep the controller Pause/Exit sheet.
+
+Vendored arcade attribution and licenses live in `stage0/vendor-arcade/ATTRIBUTION.md`. Arcade and motion cards embed with absolute `/vendor-arcade/...` and `/external-games/...` paths and the same pose→key bridge.
 
 The stable internal Stage 0 game IDs are temporarily retained so existing personal bests, activity history, artwork, tests and lazy-loaded engine modules remain compatible during the migration.
 
 ## Primary path: controller → preview → sticky embeds
 
-The default Stage 0 entry (`/`) redirects to `stage0/controller.html`: **mascot + logo, title list of 15 sticky games, GIF/canvas howto preview, then Play**. Play opens the same controller shell with `?card=<id>` (or `play.html?card=<id>`), embedding a MotionPlay mini-game under `stage0/external-games/` driven by pose → key/pose bridge (same-origin iframe). No profile dropdown and no legacy arcade links on the primary UI.
+The default Stage 0 entry (`/`) redirects to `stage0/controller.html`: **mascot + logo, 44-title library, GIF/canvas howto preview, then Play**. Play opens the same controller shell with `?card=<id>` (or `play.html?card=<id>`) for motion and arcade titles, embedding a mini-game under `stage0/external-games/` or `stage0/vendor-arcade/` driven by the pose → key/pose bridge (same-origin iframe). Classic canvas cards leave the controller only after preview, on Play, and open the original canvas engine. No profile dropdown.
 
 Action families covered by dedicated embeds (remaining cards reuse the closest family with a distinct skin/title):
 
@@ -26,7 +34,7 @@ Action families covered by dedicated embeds (remaining cards reuse the closest f
 - Raise: `raise-flap`
 - Squat / lean platformer: `squat-island`
 
-Legacy Stage 0 canvas arcade engines are fully hidden from primary navigation. They remain available only as an emergency deep link: `/?legacy=1` (or `index.html?legacy=1`) — not surfaced in the controller UI.
+Classic canvas engines are on the controller grid under **Classic canvas**. `index.html?legacy=1` still opens the older skill browser directly. A card opened from the library adds `&game=<id>&from=controller`; Quit and All games return to `controller.html`. Camera permission is requested on that page’s Play button so the prompt stays tied to a tap.
 
 Play chrome (`controller.html` / `play.html`) and embed shells share MotionPlay CSS tokens (teal / orange, Nunito, cards, buttons) via `css/play-chrome.css` and `external-games/_shared/shell.css`.
 

@@ -3,7 +3,13 @@ import { createPoseTracker } from "../pose.js";
 import { MotionSignals, leadHands } from "../signals.js";
 import { ExternalMotionMapper } from "./motion-mapper.js";
 import { ExternalGameBridge } from "./bridge.js";
-import { EMBED_CATALOG, catalogEntry, embedUrl, LIBRARY_CARD_IDS } from "./catalog.js";
+import {
+  catalogEntry,
+  embedUrl,
+  LIBRARY_SECTIONS,
+  legacyPlayUrl,
+  libraryPresentation,
+} from "./catalog.js";
 import { gameById } from "../games/registry.js";
 import { drawMascotBadge } from "../mascot.js";
 import { drawHowTo, currentClip, clipsFor, clipCue } from "../demo.js";
@@ -12,7 +18,8 @@ const el = (id) => document.getElementById(id);
 const library = el("library");
 const preview = el("preview");
 const playShell = el("play-shell");
-const titleGrid = el("title-grid");
+const librarySections = el("library-sections");
+const librarySub = el("library-sub");
 const logo = el("logo-mascot");
 const logoPreview = el("logo-mascot-preview");
 const logoPlay = el("logo-mascot-play");
@@ -117,13 +124,13 @@ function showLibrary() {
 }
 
 function showPreview(id) {
-  const entry = catalogEntry(id);
-  const meta = gameById(id);
-  if (!entry || !meta) return;
+  const card = libraryPresentation(id);
+  const meta = card ? gameById(card.engineId) : null;
+  if (!card || !meta) return;
   hideAll();
   if (preview) preview.hidden = false;
   document.body.style.background = "";
-  document.title = `MotionPlay — ${entry.title}`;
+  document.title = `MotionPlay — ${card.title}`;
   previewMeta = meta;
   previewShownStep = -1;
 
@@ -134,15 +141,15 @@ function showPreview(id) {
   const steps = el("preview-steps");
   const rules = el("preview-rules");
 
-  if (title) title.textContent = entry.title;
-  if (tagline) tagline.textContent = entry.hint || meta.tagline || "";
+  if (title) title.textContent = card.title;
+  if (tagline) tagline.textContent = card.hint || meta.tagline || "";
   if (badge) {
-    badge.className = `card-badge ${entry.needs === "upper" ? "upper" : "full"}`;
-    badge.textContent = entry.needs === "upper" ? "Upper body" : "Full body";
+    badge.className = `card-badge ${card.needs === "upper" ? "upper" : "full"}`;
+    badge.textContent = card.needs === "upper" ? "Upper body" : "Full body";
   }
   if (framing) {
     framing.textContent =
-      entry.needs === "upper"
+      card.needs === "upper"
         ? "Sit or stand close, with your head and both arms in the picture."
         : "Stand back until your whole body fits in the picture, head to feet.";
   }
@@ -174,7 +181,12 @@ function showPreview(id) {
   history.replaceState(null, "", url.pathname + "?" + url.searchParams.toString() + url.hash);
 
   if (btnPreviewPlay) {
+    btnPreviewPlay.textContent = card.kind === "canvas" ? "Play classic" : "Play";
     btnPreviewPlay.onclick = () => {
+      if (card.kind === "canvas") {
+        location.assign(legacyPlayUrl(card.engineId));
+        return;
+      }
       const playUrl = new URL(location.href);
       playUrl.searchParams.delete("preview");
       playUrl.searchParams.set("card", id);
@@ -190,38 +202,68 @@ function showPlayShell() {
 }
 
 function paintLibrary() {
-  if (!titleGrid) return;
-  titleGrid.replaceChildren();
-  for (const id of LIBRARY_CARD_IDS) {
-    const entry = EMBED_CATALOG[id];
-    const meta = gameById(id);
-    const li = document.createElement("li");
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "title-card";
-    btn.style.setProperty("--accent", entry.params?.accent || meta?.accent || "#0f9b8e");
-    btn.dataset.card = id;
+  if (!librarySections) return;
+  librarySections.replaceChildren();
+  let count = 0;
+  for (const section of LIBRARY_SECTIONS) {
+    const block = document.createElement("section");
+    block.className = "library-block";
+    block.dataset.section = section.id;
 
-    const swatch = document.createElement("div");
-    swatch.className = "title-swatch";
-    swatch.setAttribute("aria-hidden", "true");
+    const heading = document.createElement("h2");
+    heading.className = "section-head";
+    heading.id = `library-${section.id}`;
+    heading.textContent = `${section.title} · ${section.ids.length}`;
 
-    const name = document.createElement("span");
-    name.className = "title-name";
-    name.textContent = entry.title;
+    const blurb = document.createElement("p");
+    blurb.className = "library-blurb";
+    blurb.textContent = section.blurb;
 
-    const hint = document.createElement("span");
-    hint.className = "title-hint";
-    hint.textContent = entry.hint || meta?.tagline || "";
+    const grid = document.createElement("ul");
+    grid.className = "title-grid";
+    grid.setAttribute("aria-labelledby", heading.id);
 
-    const badge = document.createElement("span");
-    badge.className = "title-badge";
-    badge.textContent = entry.needs === "upper" ? "Upper body" : "Full body";
+    for (const id of section.ids) {
+      const card = libraryPresentation(id);
+      if (!card) continue;
+      const meta = gameById(card.engineId);
+      count += 1;
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "title-card";
+      btn.style.setProperty("--accent", card.accent || meta?.accent || "#0f9b8e");
+      btn.dataset.card = id;
+      btn.dataset.kind = card.kind;
 
-    btn.append(swatch, name, hint, badge);
-    btn.addEventListener("click", () => showPreview(id));
-    li.append(btn);
-    titleGrid.append(li);
+      const swatch = document.createElement("div");
+      swatch.className = "title-swatch";
+      swatch.setAttribute("aria-hidden", "true");
+
+      const name = document.createElement("span");
+      name.className = "title-name";
+      name.textContent = card.title;
+
+      const hint = document.createElement("span");
+      hint.className = "title-hint";
+      hint.textContent = card.hint || meta?.tagline || "";
+
+      const badge = document.createElement("span");
+      badge.className = "title-badge";
+      badge.textContent = card.needs === "upper" ? "Upper body" : "Full body";
+
+      btn.append(swatch, name, hint, badge);
+      btn.addEventListener("click", () => showPreview(id));
+      li.append(btn);
+      grid.append(li);
+    }
+
+    block.append(heading, blurb, grid);
+    block.setAttribute("aria-labelledby", heading.id);
+    librarySections.append(block);
+  }
+  if (librarySub) {
+    librarySub.textContent = `${count} playable titles — motion embeds, classic arcade, and original canvas engines.`;
   }
 }
 
@@ -313,10 +355,16 @@ function wireHomeLinks() {
   btnSessionExit?.addEventListener("click", exitFromSheet);
 }
 
+const opened = cardId ? libraryPresentation(cardId) : null;
+const canvasLaunch = opened?.kind === "canvas";
+if (canvasLaunch) {
+  location.replace(legacyPlayUrl(opened.engineId));
+}
+
 /* ---- library / preview path (no ?card=) ---- */
-if (!catalog) {
+if (!canvasLaunch && !catalog) {
   paintLibrary();
-  if (previewId && catalogEntry(previewId)) {
+  if (previewId && libraryPresentation(previewId)) {
     showPreview(previewId);
   } else {
     showLibrary();
@@ -336,7 +384,7 @@ if (!catalog) {
 }
 
 /* ---- play session ---- */
-const playMode = Boolean(playShell && (catalog || !library));
+const playMode = Boolean(!canvasLaunch && playShell && (catalog || !library));
 
 if (playMode && catalog) {
   showPlayShell();

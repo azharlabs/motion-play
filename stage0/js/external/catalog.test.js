@@ -1,7 +1,20 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { EMBED_CATALOG, catalogEntry, embedUrl, CATALOG_CARD_IDS, LIBRARY_CARD_IDS, isLibraryCard } from "./catalog.js";
-import { GAMES } from "../games/registry.js";
+import {
+  EMBED_CATALOG,
+  catalogEntry,
+  embedUrl,
+  CATALOG_CARD_IDS,
+  LIBRARY_CARD_IDS,
+  LIBRARY_SECTIONS,
+  LEGACY_LIBRARY_CARDS,
+  MOTION_LIBRARY_IDS,
+  ARCADE_LIBRARY_IDS,
+  isLibraryCard,
+  legacyPlayUrl,
+  libraryPresentation,
+} from "./catalog.js";
+import { GAMES, CANVAS_ENGINE_IDS, isCanvasEngine } from "../games/registry.js";
 import { CONTROL_PROFILES } from "./profiles.js";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -64,7 +77,7 @@ describe("vendored arcade HTML asset URLs", () => {
 });
 
 describe("controller library keep list", () => {
-  it("keeps delight-8 and expands with classic arcade titles", () => {
+  it("lists every embed catalog entry and every canvas engine", () => {
     const delight8 = [
       "jump-the-wall",
       "lane-runner",
@@ -78,16 +91,40 @@ describe("controller library keep list", () => {
     for (const id of delight8) {
       assert.ok(LIBRARY_CARD_IDS.includes(id), `delight title missing: ${id}`);
     }
-    assert.ok(LIBRARY_CARD_IDS.length >= 18 && LIBRARY_CARD_IDS.length <= 22);
-    for (const id of LIBRARY_CARD_IDS) {
-      assert.ok(catalogEntry(id), `missing catalog entry for library card ${id}`);
+    assert.deepEqual(LIBRARY_CARD_IDS, [...MOTION_LIBRARY_IDS, ...ARCADE_LIBRARY_IDS]);
+    assert.equal(LIBRARY_CARD_IDS.length, CATALOG_CARD_IDS.length);
+    assert.equal(new Set(LIBRARY_CARD_IDS).size, LIBRARY_CARD_IDS.length);
+    for (const id of CATALOG_CARD_IDS) {
+      assert.ok(LIBRARY_CARD_IDS.includes(id), `catalog entry missing from library: ${id}`);
       assert.equal(isLibraryCard(id), true);
+      assert.equal(libraryPresentation(id)?.kind, "embed");
     }
-    // Thin sticky embeds stay deep-linkable but off the primary grid
-    const hiddenSticky = ["pose-match", "squat-rush", "body-drums", "orbit-keeper", "hand-snake", "hand-tetris"];
-    for (const id of hiddenSticky) {
-      assert.equal(isLibraryCard(id), false, `${id} should be hidden from library`);
-      assert.ok(catalogEntry(id), `${id} stays in catalog for deep links`);
+    assert.ok(LIBRARY_CARD_IDS.includes("arcade-blaster"));
+    assert.ok(LIBRARY_CARD_IDS.includes("arcade-underrun"));
+
+    assert.equal(CANVAS_ENGINE_IDS.length, 15);
+    assert.equal(LEGACY_LIBRARY_CARDS.length, 15);
+    const titles = new Set(LIBRARY_CARD_IDS.map((id) => catalogEntry(id).title));
+    for (const card of LEGACY_LIBRARY_CARDS) {
+      assert.equal(isLibraryCard(card.id), true);
+      assert.equal(libraryPresentation(card.id)?.kind, "canvas");
+      assert.equal(isCanvasEngine(card.engineId), true);
+      assert.match(card.title, /\(Classic\)$/);
+      assert.equal(titles.has(card.title), false, `${card.title} collides with an embed title`);
+      assert.match(legacyPlayUrl(card.engineId), new RegExp(`legacy=1&game=${card.engineId}&from=controller`));
+      const engine = GAMES.find((game) => game.id === card.engineId);
+      assert.match(engine.load.toString(), new RegExp(`\\./${card.engineId}\\.js`));
     }
+
+    const sectionIds = LIBRARY_SECTIONS.flatMap((section) => section.ids);
+    assert.equal(sectionIds.length, LIBRARY_CARD_IDS.length + LEGACY_LIBRARY_CARDS.length);
+    assert.equal(new Set(sectionIds).size, sectionIds.length);
+    assert.deepEqual(
+      LIBRARY_SECTIONS.map((section) => section.id),
+      ["motion", "arcade", "canvas"],
+    );
+    assert.equal(LIBRARY_SECTIONS[0].ids.length, 15);
+    assert.equal(LIBRARY_SECTIONS[1].ids.length, 14);
+    assert.equal(LIBRARY_SECTIONS[2].ids.length, 15);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { GAMES, gameById } from "./registry.js";
+import { GAMES, gameById, CANVAS_ENGINE_IDS, isCanvasEngine } from "./registry.js";
 import { ACTION_IDS, SKILLS } from "../skills.js";
 import { BENEFIT_IDS } from "../wellness.js";
 
@@ -47,5 +47,16 @@ describe("MotionPlay active-play catalogue", () => {
   it("keeps every experience playable during the migration", () => {
     assert.ok(GAMES.every((game) => game.ready === true));
     assert.ok(GAMES.every((game) => typeof game.load === "function"));
+  });
+
+  it("marks the fifteen original canvas engines", () => {
+    assert.equal(CANVAS_ENGINE_IDS.length, 15);
+    for (const id of CANVAS_ENGINE_IDS) {
+      assert.equal(isCanvasEngine(id), true);
+      assert.match(gameById(id).load.toString(), new RegExp(`\\./${id}\\.js`));
+    }
+    for (const game of GAMES) {
+      if (game.id.startsWith("arcade-")) assert.equal(isCanvasEngine(game.id), false);
+    }
   });
 });

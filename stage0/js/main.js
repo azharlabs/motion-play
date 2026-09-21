@@ -5,7 +5,7 @@ import { coverBox, poseMapping } from "./framing.js";
 import { drawOverlay } from "./overlay.js";
 import { FpsMeter } from "./fps.js";
 import { drawMascotBadge } from "./mascot.js";
-import { GAMES, gameById } from "./games/registry.js";
+import { GAMES, gameById, isCanvasEngine } from "./games/registry.js";
 import { drawCardArt } from "./games/art.js";
 import { drawSkillArt } from "./skill-art.js";
 import { drawLevelBanner } from "./games/common.js";
@@ -188,14 +188,17 @@ let entry = null;
 let game = null;
 // The how-to screen waits for the camera; these track that wait, and which
 // selection it belongs to, so an abandoned one cannot start a round later.
-const LEGACY_ARCADE = (() => {
+const launchParams = (() => {
   try {
-    const params = new URLSearchParams(location.search);
-    return params.get("legacy") === "1" || params.get("mode") === "legacy";
+    return new URLSearchParams(location.search);
   } catch {
-    return false;
+    return new URLSearchParams();
   }
 })();
+const LEGACY_ARCADE =
+  launchParams.get("legacy") === "1" || launchParams.get("mode") === "legacy";
+const LAUNCH_GAME = launchParams.get("game") || "";
+const RETURN_TO_CONTROLLER = launchParams.get("from") === "controller";
 
 let readyToPlay = false;
 let selectToken = 0;
@@ -591,7 +594,7 @@ function fitCanvases() {
  * of just passing. Once everything is up the button goes live; on later games
  * that is immediate and this is simply the instructions.
  */
-async function selectGame(id) {
+async function selectGame(id, { preloadOnly = false } = {}) {
   entry = gameById(id);
   if (!entry?.ready) return;
 
@@ -600,8 +603,10 @@ async function selectGame(id) {
   returnSkill = phase === "skill" ? openSkillId : null;
 
   // Only a real tap is allowed to start audio, and this is the first one.
-  fx.unlock();
-  fx.cue("ui");
+  if (!preloadOnly) {
+    fx.unlock();
+    fx.cue("ui");
+  }
 
   showHowTo(entry);
 
@@ -610,15 +615,22 @@ async function selectGame(id) {
   const mine = selectToken;
 
   // Sticky product path: howto is instant; Play opens the embed shell.
-  // Legacy arcade still preloads camera + Stage 0 game modules here.
-  if (!LEGACY_ARCADE) {
-    readyToPlay = true;
+  // Deep-linked classic cards wait for Play so camera start stays a user gesture.
+  if (!LEGACY_ARCADE || preloadOnly) {
+    readyToPlay = !LEGACY_ARCADE;
     els.howtoLoading.hidden = true;
     els.btnHowtoPlay.disabled = false;
-    els.howtoLoadText.textContent = "Ready — Play opens the motion mini-game.";
+    els.howtoLoadText.textContent = LEGACY_ARCADE
+      ? "Tap Play to start the camera."
+      : "Ready — Play opens the motion mini-game.";
     return;
   }
 
+  await bootLegacyEngine(mine);
+}
+
+/** Camera + canvas module. Must run from a click so getUserMedia can prompt. */
+async function bootLegacyEngine(mine = selectToken) {
   try {
     if (!poseReady) {
       await startCamera(els.video);
@@ -627,21 +639,25 @@ async function selectGame(id) {
       poseReady = true;
       fitCanvases();
     }
-    if (mine !== selectToken) return;
+    if (mine !== selectToken) return false;
 
     const mod = await entry.load();
-    if (mine !== selectToken) return;
+    if (mine !== selectToken) return false;
     game = mod.createGame({ fx });
     readyToPlay = true;
     els.howtoLoading.hidden = true;
     els.btnHowtoPlay.disabled = false;
+    return true;
   } catch (err) {
-    if (mine !== selectToken) return;
+    if (mine !== selectToken) return false;
+    els.howtoLoading.hidden = false;
     els.howtoLoadText.textContent =
       err?.name === "NotAllowedError"
         ? "Camera permission is required. Allow it, then try again."
         : `Could not start: ${err?.message || err}`;
     els.howtoLoading.querySelector(".spinner")?.setAttribute("hidden", "");
+    els.btnHowtoPlay.disabled = false;
+    return false;
   }
 }
 
@@ -658,7 +674,7 @@ function showHowTo(meta) {
       : "Starting camera and pose tracking…"
     : "Ready when you are…";
 
-  setText(els.howtoTitle, meta.title);
+  setText(els.howtoTitle, RETURN_TO_CONTROLLER ? `${meta.title} (Classic)` : meta.title);
   setText(els.howtoTagline, meta.tagline);
   els.howtoBadge.className = `card-badge ${meta.needs}`;
   els.howtoBadge.textContent = meta.needs === "full" ? "Full body" : "Upper body";
@@ -1109,6 +1125,11 @@ function goHome() {
   selectToken += 1;
   readyToPlay = false;
   els.rotateHint.hidden = true;
+  // Cards opened from the controller library return to that grid.
+  if (RETURN_TO_CONTROLLER) {
+    location.assign("./controller.html");
+    return;
+  }
   // Back to the skill you were browsing, if you came in through one.
   if (returnSkill) openSkill(returnSkill);
   else show("home");
@@ -1120,9 +1141,21 @@ function launchStickyPlay() {
   location.href = `./controller.html?card=${encodeURIComponent(entry.id)}`;
 }
 
-els.btnHowtoPlay.addEventListener("click", () => {
-  if (LEGACY_ARCADE) beginCalibration();
-  else launchStickyPlay();
+els.btnHowtoPlay.addEventListener("click", async () => {
+  if (!LEGACY_ARCADE) {
+    launchStickyPlay();
+    return;
+  }
+  fx.unlock();
+  if (!readyToPlay) {
+    els.btnHowtoPlay.disabled = true;
+    els.howtoLoading.hidden = false;
+    els.howtoLoading.querySelector(".spinner")?.removeAttribute("hidden");
+    els.howtoLoadText.textContent = "Starting camera and pose tracking…";
+    const ok = await bootLegacyEngine();
+    if (!ok) return;
+  }
+  beginCalibration();
 });
 els.btnHowtoBack.addEventListener("click", goHome);
 el("btn-load-back").addEventListener("click", goHome);
@@ -1238,6 +1271,9 @@ window.addEventListener("keyup", (e) => {
 });
 
 buildSkillGrid();
+if (LEGACY_ARCADE && isCanvasEngine(LAUNCH_GAME)) {
+  selectGame(LAUNCH_GAME, { preloadOnly: true });
+}
 fitCanvases();
 registerWorker();
 offerInstall(els.screens.home);

@@ -458,4 +458,31 @@ export const GAMES = [
   },
 ];
 
+/**
+ * Original Stage 0 canvas engines under js/games/*.js.
+ * Vendored arcade ids stay in GAMES for activity history but load a stub;
+ * these fifteen are the real legacy play modules.
+ */
+export const CANVAS_ENGINE_IDS = [
+  "jump-the-wall",
+  "fruit-slice",
+  "ski-slalom",
+  "goalkeeper",
+  "punch-out",
+  "pose-match",
+  "squat-rush",
+  "balloon-pop",
+  "lane-runner",
+  "body-drums",
+  "sky-flap",
+  "orbit-keeper",
+  "hand-snake",
+  "hand-tetris",
+  "freeze-frame",
+];
+
+export function isCanvasEngine(id) {
+  return CANVAS_ENGINE_IDS.includes(id);
+}
+
 export const gameById = (id) => GAMES.find((g) => g.id === id || g.productId === id) ?? null;
